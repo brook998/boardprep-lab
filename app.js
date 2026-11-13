@@ -560,17 +560,47 @@
     els.answeredCounter.textContent = `${answered} of ${session.questions.length} answered`;
   }
 
+  const pyqImageBundlePromises = {};
+
+  function loadPyqImageBundle(classLevel) {
+    const level = String(classLevel || '10') === '12' ? '12' : '10';
+    if (pyqImageBundlePromises[level]) return pyqImageBundlePromises[level];
+    pyqImageBundlePromises[level] = new Promise((resolve) => {
+      const script = document.createElement('script');
+      script.src = new URL(`pyq-images-class${level}.js`, document.baseURI).href;
+      script.async = true;
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.head.append(script);
+    });
+    return pyqImageBundlePromises[level];
+  }
+
   function renderSourceImage(question) {
     if (!question.sourceImage) return;
     const details = makeElement('details', 'source-image-details');
-    const summary = makeElement('summary', '', 'Original paper image (tap to collapse)');
+    const summary = makeElement('summary', '', 'Original paper question image');
     details.open = true;
     const image = document.createElement('img');
-    image.src = question.sourceImage;
     image.alt = `Original ${question.subject || ''} question ${question.questionNumber || ''} from paper ${question.paperCode || ''}`;
     image.loading = 'lazy';
+    image.decoding = 'async';
+    const filename = String(question.sourceImage).split('/').pop();
+    const fallback = makeElement('p', 'source-image-fallback', 'The original image could not be loaded. Open “Text transcription” below to read the question.');
+    image.addEventListener('error', () => {
+      if (image.isConnected) image.remove();
+      if (!fallback.isConnected) details.append(fallback);
+      const textDetails = els.questionArea.querySelector('.source-text-details');
+      if (textDetails) textDetails.open = true;
+    });
     details.append(summary, image);
     els.questionArea.append(details);
+    loadPyqImageBundle(question.class).then((loaded) => {
+      const bundled = window.PYQ_IMAGE_DATA && window.PYQ_IMAGE_DATA[filename];
+      if (bundled) image.src = bundled;
+      else if (loaded) image.src = question.sourceImage;
+      else image.src = question.sourceImage;
+    });
   }
 
   function renderQuestion() {
@@ -608,8 +638,16 @@
       const sourceLine = makeElement('p', 'source-question-meta', `Original paper ${question.paperCode || question.sourcePaper || 'code not listed'} · Question ${question.questionNumber || '—'} · ${question.year || 'Year unverified'}`);
       els.questionArea.append(sourceLine);
     }
-    els.questionArea.append(makeElement('h3', 'question-prompt', question.prompt));
-    renderSourceImage(question);
+    if (question.sourceImage) {
+      renderSourceImage(question);
+      const textDetails = makeElement('details', 'source-text-details');
+      const textSummary = makeElement('summary', '', 'Text transcription (tap to expand)');
+      const compactPrompt = String(question.prompt || '').replace(/\s+/g, ' ').trim();
+      textDetails.append(textSummary, makeElement('p', 'question-prompt source-question-transcription', compactPrompt));
+      els.questionArea.append(textDetails);
+    } else {
+      els.questionArea.append(makeElement('h3', 'question-prompt', question.prompt));
+    }
 
     if (question.type === 'mcq' || question.type === 'source-mcq') {
       const options = makeElement('div', 'question-options');
@@ -637,11 +675,10 @@
       });
       els.questionArea.append(options);
       if (question.type === 'source-mcq') {
-        const hasKey = hasAutoAnswerKey(question);
-        const hint = hasKey
-          ? 'Select A, B, C or D. This PYQ MCQ will be checked automatically when you submit.'
-          : 'Answer key not available for this PYQ yet. Your response will be saved, but this question will not be included in the automatic score.';
-        els.questionArea.append(makeElement('p', 'input-hint', `The choices are shown in the source question. ${hint}`));
+        const hint = question.gradingStatus === 'verified'
+          ? 'Select A, B, C or D. This answer has been verified and will be checked automatically when you submit.'
+          : 'Select A, B, C or D. This question is not included in your score yet because its answer key has not been verified.';
+        els.questionArea.append(makeElement('p', 'input-hint', hint));
       }
     } else if (question.type === 'written') {
       const wrap = makeElement('div', 'answer-input-wrap written-answer-wrap');
@@ -676,7 +713,7 @@
       });
       wrap.append(input);
       wrap.append(makeElement('p', 'input-hint', question.type === 'numeric'
-        ? `Numerical answer · checked automatically on submission${question.unit ? ` · unit: ${question.unit}` : ''}. Equivalent decimal formatting is accepted.`
+        ? `Enter the number${question.unit ? ` (unit: ${question.unit})` : ''}. Equivalent decimal formatting is accepted.`
         : 'Capitalisation and extra spaces do not matter.'));
       els.questionArea.append(wrap);
     }
@@ -698,21 +735,12 @@
     return match ? Number(match[0]) : NaN;
   }
 
-  function hasAutoAnswerKey(question) {
-    if (!question || question.type === 'written') return false;
-    if (question.type === 'source-mcq') return /^[A-D]$/i.test(String(question.answerKeyLetter || '').trim());
-    if (question.type === 'numeric') return String(question.answer ?? '').trim() !== '' && Number.isFinite(Number(question.answer));
-    if (question.type === 'mcq') return question.answer !== undefined && question.answer !== null && String(question.answer).trim() !== '';
-    if (question.type === 'blank') {
-      const accepted = Array.isArray(question.accepted) ? question.accepted : [question.answer];
-      return accepted.some((answer) => String(answer ?? '').trim() !== '');
-    }
-    return question.answer !== undefined && question.answer !== null && String(question.answer).trim() !== '';
-  }
-
   function isCorrect(question, response) {
-    if (String(response ?? '').trim() === '' || question.type === 'written' || !hasAutoAnswerKey(question)) return false;
-    if (question.type === 'source-mcq') return normaliseText(response) === normaliseText(question.answerKeyLetter);
+    if (String(response ?? '').trim() === '' || question.type === 'written' || question.gradingStatus === 'pending-review') return false;
+    if (question.type === 'source-mcq') {
+      return question.gradingStatus === 'verified' && /^[ABCD]$/.test(String(question.answerKeyLetter || ''))
+        && normaliseText(response) === normaliseText(question.answerKeyLetter);
+    }
     if (question.type === 'mcq') return normaliseText(response) === normaliseText(question.answer);
     if (question.type === 'numeric') {
       const entered = parseNumeric(response);
@@ -725,7 +753,9 @@
   }
 
   function correctAnswerText(question) {
-    if (question.type === 'source-mcq') return hasAutoAnswerKey(question) ? `Option ${String(question.answerKeyLetter).toUpperCase()}` : 'Answer key not available';
+    if (question.type === 'source-mcq') return question.gradingStatus === 'verified' && question.answerKeyLetter
+      ? `Verified correct option: ${question.answerKeyLetter}`
+      : 'Answer key not yet verified — this question is not included in the score';
     if (question.type === 'written') return 'Written response — teacher evaluation required';
     if (question.type === 'blank') return (question.accepted || [question.answer]).join(' / ');
     if (question.type === 'numeric') return `${question.answer}${question.unit ? ` ${question.unit}` : ''}`;
@@ -795,16 +825,16 @@
     const unanswered = session.questions.length - answered;
     const marked = session.questions.filter((question) => session.marked?.[question.id]).length;
     const notVisited = session.questions.filter((question, index) => !session.visited?.[question.id] && index !== session.index).length;
-    const teacherReview = session.questions.filter((question) => question.type === 'written').length;
-    const missingKeys = session.questions.filter((question) => question.type !== 'written' && !hasAutoAnswerKey(question)).length;
+    const pending = session.questions.filter((question) => question.type === 'written').length;
+    const unverified = session.questions.filter((question) => question.type === 'source-mcq' && question.gradingStatus !== 'verified').length;
     els.submitSummary.replaceChildren();
     [
       ['Answered', answered],
       ['Not answered', unanswered],
       ['Marked for review', marked],
       ['Not visited', notVisited],
-      ['Written answers for teacher checking', teacherReview],
-      ['Objective / numerical questions without answer keys', missingKeys]
+      ['Descriptive answers for teacher checking', pending],
+      ['Objective questions not yet scored', unverified]
     ].forEach(([label, value]) => {
       const row = makeElement('div', 'submit-summary-row');
       row.append(makeElement('span', '', label), makeElement('strong', '', String(value)));
@@ -826,9 +856,9 @@
     const outcomes = completedSession.questions.map((question) => {
       const response = completedSession.answers[question.id] ?? '';
       const attempted = String(response).trim() !== '';
-      const requiresTeacherReview = question.type === 'written';
-      const answerKeyMissing = !requiresTeacherReview && !hasAutoAnswerKey(question);
-      const gradable = !requiresTeacherReview && !answerKeyMissing;
+      const pendingReview = question.type === 'written';
+      const needsVerification = question.type === 'source-mcq' && question.gradingStatus !== 'verified';
+      const gradable = !pendingReview && !needsVerification && question.gradingStatus !== 'pending-review';
       const correct = gradable && attempted && isCorrect(question, response);
       return {
         id: question.id,
@@ -840,9 +870,8 @@
         attempted,
         correct,
         gradable,
-        pendingReview: requiresTeacherReview && attempted,
-        requiresTeacherReview,
-        answerKeyMissing,
+        pendingReview: pendingReview && attempted,
+        needsVerification,
         answer: correctAnswerText(question),
         answerKeyLetter: question.answerKeyLetter || null,
         explanation: question.explanation || '',
@@ -856,7 +885,7 @@
     const attemptedCount = outcomes.filter((item) => item.attempted).length;
     const gradableAttemptedCount = outcomes.filter((item) => item.attempted && item.gradable).length;
     const pendingReviewCount = outcomes.filter((item) => item.pendingReview).length;
-    const answerKeyMissingCount = outcomes.filter((item) => item.attempted && item.answerKeyMissing).length;
+    const unverifiedCount = outcomes.filter((item) => item.needsVerification && item.attempted).length;
     const wrongCount = outcomes.filter((item) => item.attempted && item.gradable && !item.correct).length;
     const score = outcomes.reduce((sum, item) => sum + (item.gradable && item.correct ? item.marks : 0), 0);
     const maxMarks = outcomes.reduce((sum, item) => sum + (item.gradable ? item.marks : 0), 0);
@@ -878,7 +907,7 @@
       attemptedCount,
       gradableAttemptedCount,
       pendingReviewCount,
-      answerKeyMissingCount,
+      unverifiedCount,
       totalQuestions: outcomes.length,
       timeSpentSeconds: Math.max(0, Math.floor((Date.now() - completedSession.startedAt) / 1000)),
       timeExpired,
@@ -940,16 +969,16 @@
     els.resultScore.textContent = result.maxMarks ? `${formatNumber(result.score)}/${formatNumber(result.maxMarks)}` : 'Pending';
     els.resultPercent.textContent = result.maxMarks ? `${Math.round(result.percentage)}% of auto-graded marks` : 'No automatic score for this set';
     els.resultAccuracy.textContent = result.gradableAttemptedCount ? `${Math.round(result.accuracy)}%` : '—';
-    els.resultAttempted.textContent = `${result.attemptedCount} attempted · ${result.pendingReviewCount || 0} pending review`;
+    els.resultAttempted.textContent = `${result.attemptedCount} attempted · ${result.pendingReviewCount || 0} written for teacher`;
     els.resultCorrect.textContent = String(result.correctCount);
     els.resultWrong.textContent = `${result.wrongCount} wrong · ${result.totalQuestions - result.attemptedCount} skipped`;
     els.reviewCount.textContent = `${result.totalQuestions} questions`;
     let insight = '';
-    if (result.pendingReviewCount || result.answerKeyMissingCount) {
-      const notes = [];
-      if (result.pendingReviewCount) notes.push(`${result.pendingReviewCount} written response(s) need teacher checking`);
-      if (result.answerKeyMissingCount) notes.push(`${result.answerKeyMissingCount} attempted objective/numerical question(s) were excluded because no answer key is stored`);
-      insight = `${notes.join('. ')}.`;
+    if (result.pendingReviewCount || result.unverifiedCount) {
+      const parts = [];
+      if (result.pendingReviewCount) parts.push(`${result.pendingReviewCount} descriptive answer(s) are saved for teacher checking`);
+      if (result.unverifiedCount) parts.push(`${result.unverifiedCount} objective answer(s) were excluded because their keys are not yet verified`);
+      insight = `${parts.join('; ')}.`;
     } else if (result.attemptedCount === 0) insight = 'No answers were attempted in this session. Review the answers below and try a shorter set.';
     else if (result.accuracy >= 85) insight = 'Strong work. Review the questions you missed so that small gaps do not become repeated mistakes.';
     else if (result.accuracy >= 60) insight = 'A useful practice run. Revisit the incorrect answers and try another set from the same topics.';
@@ -962,21 +991,18 @@
       const card = makeElement('article', 'review-item');
       const head = makeElement('div', 'review-item-head');
       head.append(makeElement('b', '', `Q${index + 1} · ${item.chapter}${item.year ? ` · PYQ ${item.year}` : ''}${item.set ? ` · ${item.set}` : ''}`));
-      const teacherItem = Boolean(item.requiresTeacherReview);
-      const missingKeyItem = Boolean(item.answerKeyMissing);
-      const notAutoScored = teacherItem || missingKeyItem;
-      let statusClass = notAutoScored ? 'pending' : (item.correct ? 'good' : 'bad');
-      let statusText = teacherItem
-        ? (item.attempted ? 'To be checked by teacher' : 'Written · manual marking')
-        : (missingKeyItem ? 'Not scored · answer key missing' : (item.correct ? `✓ Correct · ${item.marks} mark(s)` : (item.attempted ? '✕ Incorrect' : '— Not attempted')));
+      const manualItem = Boolean(item.pendingReview);
+      const unverifiedItem = Boolean(item.needsVerification);
+      let statusClass = (manualItem || unverifiedItem) ? 'pending' : (item.correct ? 'good' : 'bad');
+      let statusText = manualItem ? (item.attempted ? 'Pending teacher check' : 'Written answer · teacher check')
+        : unverifiedItem ? 'Not scored · answer key not verified'
+        : (item.correct ? `✓ Correct · ${item.marks} mark(s)` : (item.attempted ? '✕ Incorrect' : '— Not attempted'));
       head.append(makeElement('span', `review-status ${statusClass}`, statusText));
       card.append(head);
       card.append(makeElement('p', 'review-prompt', item.prompt));
       card.append(makeElement('p', 'review-answer', `Your answer: ${item.attempted ? item.response : 'Not answered'}`));
-      if (teacherItem) {
-        card.append(makeElement('p', 'review-answer source-key-note', 'Descriptive response · teacher evaluation required'));
-      } else if (missingKeyItem) {
-        card.append(makeElement('p', 'review-answer source-key-note', 'No answer key is stored for this objective/numerical question. It was saved but excluded from the automatic score.'));
+      if (manualItem || unverifiedItem) {
+        card.append(makeElement('p', 'review-answer source-key-note', item.answer));
       } else {
         card.append(makeElement('p', 'review-answer correct-answer', `Correct answer: ${item.answer}`));
         if (item.explanation) card.append(makeElement('p', 'review-explanation', item.explanation));
@@ -991,10 +1017,12 @@
       const key = item.chapter || 'General';
       if (!groups.has(key)) groups.set(key, { chapter: key, attempted: 0, correct: 0, total: 0 });
       const group = groups.get(key);
-      group.total += 1;
-      if (item.attempted) {
-        group.attempted += 1;
-        if (item.correct) group.correct += 1;
+      if (item.gradable) {
+        group.total += 1;
+        if (item.attempted) {
+          group.attempted += 1;
+          if (item.correct) group.correct += 1;
+        }
       }
     });
     target.replaceChildren();
@@ -1124,7 +1152,7 @@
       const key = `${attempt.class}|${attempt.board}|${attempt.subject}|${item.chapter}`;
       if (!chapterMap.has(key)) chapterMap.set(key, { chapter: item.chapter, subject: attempt.subject, class: attempt.class, attempted: 0, correct: 0 });
       const stats = chapterMap.get(key);
-      if (item.attempted && item.gradable !== false) {
+      if (item.attempted && item.gradable) {
         stats.attempted += 1;
         if (item.correct) stats.correct += 1;
       }

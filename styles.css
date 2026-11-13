@@ -291,3 +291,10 @@ select:focus,input:focus{border-color:#90a9ec;box-shadow:0 0 0 3px rgba(56,104,2
   .exam-fullscreen-btn{font-size:8px;padding:8px 7px;white-space:nowrap}
   .exam-subtitle{max-width:230px;font-size:8px}
 }
+
+/* Source PYQ images are the primary display; OCR transcription stays collapsed to avoid broken line spacing. */
+.source-text-details { margin: 12px 0 18px; padding: 12px 14px; border: 1px solid var(--border, #d8e0e8); border-radius: 12px; background: var(--surface-soft, #f7f9fb); }
+.source-text-details summary { cursor: pointer; color: var(--muted, #526273); font-weight: 650; font-size: .92rem; }
+.source-question-transcription { margin: 12px 0 2px; white-space: normal !important; font-size: 1rem !important; line-height: 1.55 !important; font-weight: 500 !important; }
+.source-image-fallback { margin: 12px 0 4px; color: var(--muted, #526273); font-size: .92rem; }
+.source-image-details img { display: block; max-width: 100%; height: auto; margin: 0 auto; }

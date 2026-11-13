@@ -1,0 +1,19 @@
+VIDHYASHRAM BOARDPREP LAB — PYQ GRADING + IMAGE FIX
+
+Upload these five files to the ROOT of your GitHub repository (the same folder as index.html):
+1. app.js
+2. source-questions.js
+3. styles.css
+4. pyq-images-class10.js
+5. pyq-images-class12.js
+
+Do not put the files inside assets/ or assets/pyq. Keep both image-bundle files in the repository root.
+On GitHub, open the repository home page → Add file → Upload files. Select all five extracted files, then Commit changes.
+
+What changes:
+- Verified Class 10 MCQs and Class 12 Physics MCQs grade automatically.
+- One clear Class 10 numerical PYQ accepts a numeric response.
+- Descriptive answers remain for teacher checking.
+- Objective PYQs without a verified key are marked “not scored — answer key not verified”, not “teacher check”.
+- Original question images are embedded in the two JS bundles, so you do not need to upload the 749-image assets folder.
+- Mock tests remain unchanged and are still checked offline by the teacher.
