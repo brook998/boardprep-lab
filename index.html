@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#14233b">
+  <meta name="description" content="A simple board-exam practice tool for Classes 10 and 12.">
+  <title>BoardPrep Lab — Practice with purpose</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="#top" aria-label="BoardPrep Lab home">
+      <span class="brand-mark">B<span>+</span></span>
+      <span><strong>BoardPrep Lab</strong><small>Practice with purpose</small></span>
+    </a>
+    <div class="header-right">
+      <span class="privacy-note"><span class="privacy-dot"></span> No login · Progress stays on this device</span>
+      <button class="button button-quiet button-small" id="howItWorksBtn" type="button">How it works</button>
+    </div>
+  </header>
+
+  <main id="top" class="page-shell">
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">YOUR BOARD-PREP PRACTICE SPACE</p>
+        <h1>Know what you know.<br><span>Work on what you don't.</span></h1>
+        <p class="hero-subtitle">Chapter-wise practice, timed tests and useful feedback for Classes 10 and 12.</p>
+      </div>
+      <div class="hero-stamp" aria-hidden="true"><span>LEARN</span><b>·</b><span>PRACTISE</span><b>·</b><span>IMPROVE</span></div>
+    </section>
+
+    <div class="notice" role="note">
+      <strong>Starter edition:</strong> The included questions are original demo questions to test the platform. This is not yet a complete syllabus, official PYQ collection or board-validated question bank.
+    </div>
+
+    <section class="workspace">
+      <aside class="panel setup-panel" aria-labelledby="setupHeading">
+        <div class="panel-heading">
+          <div><p class="eyebrow">START HERE</p><h2 id="setupHeading">Build your practice</h2></div>
+          <span class="step-chip">01 / 02</span>
+        </div>
+        <form id="setupForm">
+          <label for="classSelect">Class</label>
+          <select id="classSelect">
+            <option value="10">Class 10</option>
+            <option value="12">Class 12</option>
+          </select>
+
+          <label for="boardSelect">Board</label>
+          <select id="boardSelect"></select>
+
+          <label for="subjectSelect">Subject</label>
+          <select id="subjectSelect"></select>
+
+          <label for="chapterSelect">Chapter / topic</label>
+          <select id="chapterSelect"><option value="all">All available chapters</option></select>
+
+          <label for="difficultySelect">Difficulty</label>
+          <select id="difficultySelect">
+            <option value="all">Mixed (all levels)</option>
+            <option value="Easy">Easy</option>
+            <option value="Moderate">Moderate</option>
+            <option value="Difficult">Difficult</option>
+          </select>
+
+          <div class="field-row">
+            <div>
+              <label for="modeSelect">Mode</label>
+              <select id="modeSelect">
+                <option value="practice">Practice</option>
+                <option value="test">Timed test</option>
+              </select>
+            </div>
+            <div>
+              <label for="countSelect">Questions</label>
+              <select id="countSelect">
+                <option value="5">5</option>
+                <option value="10" selected>10</option>
+                <option value="15">15</option>
+                <option value="20">20</option>
+              </select>
+            </div>
+          </div>
+          <div id="durationWrap" class="duration-wrap hidden">
+            <label for="durationInput">Time limit (minutes)</label>
+            <input id="durationInput" type="number" min="5" max="180" value="20" inputmode="numeric">
+          </div>
+          <div class="available-line"><span id="availableCount">0 questions available</span><span class="dot-separator">•</span><span id="bankLabel">Demo bank</span></div>
+          <p id="formMessage" class="form-message" aria-live="polite"></p>
+          <button class="button button-primary button-full" id="startBtn" type="submit">Generate my set <span aria-hidden="true">→</span></button>
+        </form>
+        <div class="setup-footnote"><span class="tiny-lock">▣</span> No account or personal details required.</div>
+      </aside>
+
+      <section class="main-column">
+        <section id="welcomePanel" class="panel welcome-panel">
+          <div class="welcome-art" aria-hidden="true"><div class="paper paper-back"></div><div class="paper paper-front"><i></i><i></i><i></i><b>✓</b></div><span class="spark spark-one">✳</span><span class="spark spark-two">✦</span></div>
+          <div class="welcome-copy">
+            <p class="eyebrow">A BETTER WAY TO REVISE</p>
+            <h2>Your next practice session<br>starts here.</h2>
+            <p>Choose a subject and chapter, then generate a fresh set. The tool checks objective answers and keeps a record of your practice on this device.</p>
+            <div class="feature-pills"><span>Instant checking</span><span>Random tests</span><span>Progress insights</span></div>
+          </div>
+        </section>
+
+        <section id="sessionPanel" class="panel session-panel hidden" aria-labelledby="sessionTitle">
+          <div class="session-topline">
+            <div><p class="eyebrow" id="sessionMeta">PRACTICE SESSION</p><h2 id="sessionTitle">Your practice set</h2></div>
+            <div class="timer-box hidden" id="timerBox"><span class="timer-label">TIME LEFT</span><strong id="timerText">20:00</strong></div>
+          </div>
+          <div class="session-progress-row"><span id="questionCounter">Question 1 of 10</span><span id="answeredCounter">0 answered</span></div>
+          <div class="progress-track"><div id="progressFill" class="progress-fill"></div></div>
+          <div class="question-area" id="questionArea"></div>
+          <div class="question-nav">
+            <button class="button button-quiet" id="prevBtn" type="button">← Previous</button>
+            <div class="nav-right">
+              <button class="button button-outline hidden" id="checkBtn" type="button">Check answer</button>
+              <button class="button button-primary" id="nextBtn" type="button">Next question →</button>
+              <button class="button button-primary hidden" id="finishBtn" type="button">Submit test</button>
+            </div>
+          </div>
+          <div class="session-bottom"><button class="text-button" id="exitSessionBtn" type="button">Exit this session</button><span id="sessionHint">You can move between questions before finishing.</span></div>
+        </section>
+
+        <section id="resultPanel" class="panel result-panel hidden" aria-labelledby="resultHeading">
+          <div class="result-heading-row"><div><p class="eyebrow">SESSION COMPLETE</p><h2 id="resultHeading">Here's how you did</h2></div><span class="result-check">✓</span></div>
+          <div class="score-grid">
+            <div class="score-card score-main"><span>YOUR SCORE</span><strong id="resultScore">0/0</strong><small id="resultPercent">0%</small></div>
+            <div class="score-card"><span>ACCURACY</span><strong id="resultAccuracy">0%</strong><small id="resultAttempted">0 attempted</small></div>
+            <div class="score-card"><span>CORRECT</span><strong id="resultCorrect">0</strong><small id="resultWrong">0 incorrect</small></div>
+          </div>
+          <div class="result-insight" id="resultInsight"></div>
+          <div class="result-actions"><button class="button button-primary" id="tryAgainBtn" type="button">Generate another set</button><button class="button button-outline" id="downloadResultBtn" type="button">Download report ↓</button></div>
+          <div class="review-heading"><h3>Review your answers</h3><span id="reviewCount">0 questions</span></div>
+          <div id="reviewList" class="review-list"></div>
+        </section>
+
+        <section class="panel dashboard-panel" aria-labelledby="dashboardHeading">
+          <div class="panel-heading dashboard-heading"><div><p class="eyebrow">YOUR PRACTICE HISTORY</p><h2 id="dashboardHeading">Progress on this device</h2></div><button class="text-button" id="resetProgressBtn" type="button">Reset history</button></div>
+          <div class="stats-grid">
+            <div class="stat-card"><span>TESTS COMPLETED</span><strong id="statAttempts">0</strong></div>
+            <div class="stat-card"><span>AVERAGE SCORE</span><strong id="statAverage">—</strong></div>
+            <div class="stat-card"><span>BEST SCORE</span><strong id="statBest">—</strong></div>
+            <div class="stat-card"><span>QUESTIONS TRIED</span><strong id="statTried">0</strong></div>
+          </div>
+          <div class="dashboard-lower">
+            <div class="topic-box"><h3>Topics to revisit</h3><div id="weakTopics" class="empty-state">Complete a few sessions to see topic-level insights.</div></div>
+            <div class="recent-box"><h3>Recent sessions</h3><div id="recentSessions" class="empty-state">Your completed sessions will appear here.</div></div>
+          </div>
+          <p class="storage-note">Progress is stored only in this browser on this device. It does not sync across phones or browsers.</p>
+        </section>
+      </section>
+    </section>
+
+    <footer class="site-footer"><span>BoardPrep Lab <span class="footer-sep">·</span> A classroom learning project</span><span>Keep practising. Small improvements add up.</span></footer>
+  </main>
+
+  <dialog id="howDialog" class="how-dialog">
+    <div class="dialog-head"><div><p class="eyebrow">QUICK GUIDE</p><h2>How BoardPrep Lab works</h2></div><button class="icon-button" id="closeDialogBtn" aria-label="Close" type="button">×</button></div>
+    <ol class="guide-list">
+      <li><b>Choose your class, board and subject.</b><span>Class 10 is CBSE. Class 12 offers CBSE and ISC.</span></li>
+      <li><b>Choose a chapter or mix the available chapters.</b><span>The question count shows how many questions currently exist in that selection.</span></li>
+      <li><b>Practise or take a timed test.</b><span>Practice mode gives feedback as you go. Timed test mode checks answers when you submit.</span></li>
+      <li><b>Review the result.</b><span>Read explanations, revisit mistakes and check your progress dashboard.</span></li>
+    </ol>
+    <p class="dialog-warning">This starter site is for learning and practice, not for secure exams. Answer keys are included in the browser files, and progress is stored locally.</p>
+    <button class="button button-primary button-full" id="gotItBtn" type="button">Got it</button>
+  </dialog>
+  <script src="questions.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
