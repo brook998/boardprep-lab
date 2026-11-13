@@ -189,7 +189,7 @@
     if (text !== undefined && text !== null) node.textContent = String(text);
     return node;
   }
-    function renderQuestion() {
+  function renderQuestion() {
     if (!session) return;
     const q = session.questions[session.index];
     const total = session.questions.length;
@@ -335,14 +335,14 @@
     renderQuestion();
   }
 
-    function finishSession(timeExpired = false) {
+  function finishSession(timeExpired = false) {
     if (!session || session.saved) return;
     stopTimer();
     const outcomes = session.questions.map((q) => {
       const response = session.answers[q.id] ?? '';
       const attempted = String(response).trim() !== '';
       const correct = attempted && isCorrect(q, response);
-      return { id: q.id, chapter: q.chapter, topic: q.topic, prompt: q.prompt, type: q.type, response, attempted, correct, answer: correctAnswerText(q), explanation: q.explanation || '', marks: Number(q.marks || 1) };
+      return { id: q.id, chapter: q.chapter, topic: q.topic || q.chapter, prompt: q.prompt, type: q.type, response, attempted, correct, answer: correctAnswerText(q), explanation: q.explanation || '', marks: Number(q.marks || 1) };
     });
     const correctCount = outcomes.filter((item) => item.correct).length;
     const attemptedCount = outcomes.filter((item) => item.attempted).length;
@@ -455,68 +455,143 @@
       });
     }
   }
-      const metrics = [
+  function formatDuration(seconds) {
+    const total = Math.max(0, Math.floor(Number(seconds) || 0));
+    const hours = Math.floor(total / 3600);
+    const minutes = Math.floor((total % 3600) / 60);
+    const remainingSeconds = total % 60;
+    if (hours > 0) return `${hours}h ${minutes}m ${remainingSeconds}s`;
+    if (minutes > 0) return `${minutes}m ${remainingSeconds}s`;
+    return `${remainingSeconds}s`;
+  }
+
+  function downloadResult() {
+    const result = latestResult;
+    if (!result) {
+      window.alert('There is no completed session report to download yet.');
+      return;
+    }
+
+    const canvas = document.createElement('canvas');
+    canvas.width = 1200;
+    canvas.height = 900;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      window.alert('Your browser could not create the report image. Please try another browser.');
+      return;
+    }
+
+    // Background and report sheet.
+    ctx.fillStyle = '#eef2f7';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(36, 36, 1128, 828);
+
+    // Header.
+    ctx.fillStyle = '#14213d';
+    ctx.font = 'bold 42px Arial, sans-serif';
+    ctx.fillText('BoardPrep Lab', 76, 112);
+    ctx.fillStyle = '#64748b';
+    ctx.font = '22px Arial, sans-serif';
+    ctx.fillText('PRACTICE SESSION REPORT', 78, 151);
+
+    const heading = `Class ${result.class} · ${result.board} · ${result.subject}`;
+    ctx.fillStyle = '#0f172a';
+    ctx.font = 'bold 27px Arial, sans-serif';
+    ctx.fillText(heading, 78, 218, 1035);
+    ctx.fillStyle = '#64748b';
+    ctx.font = '19px Arial, sans-serif';
+    const dateText = result.date ? new Date(result.date).toLocaleString() : new Date().toLocaleString();
+    ctx.fillText(`${dateText}  |  ${result.mode === 'test' ? 'Timed test' : 'Practice session'}`, 78, 254);
+
+    ctx.strokeStyle = '#dbe3ef';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(78, 282);
+    ctx.lineTo(1122, 282);
+    ctx.stroke();
+
+    // Six requested performance measures, arranged in two rows.
+    const metrics = [
       { label: 'TOTAL QUESTIONS', value: String(result.totalQuestions) },
       { label: 'ATTEMPTED', value: String(result.attemptedCount) },
       { label: 'CORRECT', value: String(result.correctCount) },
       { label: 'WRONG', value: String(result.wrongCount) },
-      { label: 'ACCURACY', value: `${Number(result.accuracy).toFixed(1)}%` },
-      { label: 'PERCENTAGE', value: `${Number(result.percentage).toFixed(1)}%` }
+      { label: 'ACCURACY', value: `${Number(result.accuracy || 0).toFixed(1)}%` },
+      { label: 'PERCENTAGE', value: `${Number(result.percentage || 0).toFixed(1)}%` }
     ];
-    const cardW = 330;
-    const cardH = 145;
-    const gapX = 36;
-    const gapY = 28;
-    const left = 72;
-    const top = 400;
+    const cardWidth = 320;
+    const cardHeight = 145;
+    const horizontalGap = 42;
+    const verticalGap = 28;
+    const startX = 78;
+    const startY = 326;
 
     metrics.forEach((metric, index) => {
-      const col = index % 3;
+      const column = index % 3;
       const row = Math.floor(index / 3);
-      const x = left + col * (cardW + gapX);
-      const y = top + row * (cardH + gapY);
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(x, y, cardW, cardH);
+      const x = startX + column * (cardWidth + horizontalGap);
+      const y = startY + row * (cardHeight + verticalGap);
+
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillRect(x, y, cardWidth, cardHeight);
       ctx.strokeStyle = '#dbe3ef';
       ctx.lineWidth = 2;
-      ctx.strokeRect(x, y, cardW, cardH);
+      ctx.strokeRect(x, y, cardWidth, cardHeight);
+
       ctx.fillStyle = '#64748b';
-      ctx.font = 'bold 19px Arial, sans-serif';
+      ctx.font = 'bold 18px Arial, sans-serif';
       ctx.fillText(metric.label, x + 24, y + 42);
       ctx.fillStyle = '#0f172a';
       ctx.font = 'bold 48px Arial, sans-serif';
-      ctx.fillText(metric.value, x + 24, y + 105);
+      ctx.fillText(metric.value, x + 24, y + 108);
     });
 
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(72, 750, 1056, 62);
-    ctx.strokeStyle = '#dbe3ef';
-    ctx.strokeRect(72, 750, 1056, 62);
-    ctx.fillStyle = '#334155';
-    ctx.font = 'bold 23px Arial, sans-serif';
-    ctx.fillText(`TIME SPENT: ${formatDuration(result.timeSpentSeconds)}`, 98, 790);
-    ctx.textAlign = 'right';
-    ctx.font = '20px Arial, sans-serif';
-    ctx.fillStyle = '#64748b';
-    ctx.fillText(result.mode === 'test' ? 'Timed test' : 'Practice session', 1100, 790);
-    ctx.textAlign = 'left';
+    // Time spent is displayed separately so it remains prominent.
+    ctx.fillStyle = '#eff6ff';
+    ctx.fillRect(78, 690, 1044, 94);
+    ctx.strokeStyle = '#bfdbfe';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(78, 690, 1044, 94);
+    ctx.fillStyle = '#1e40af';
+    ctx.font = 'bold 20px Arial, sans-serif';
+    ctx.fillText('TIME SPENT', 106, 727);
+    ctx.fillStyle = '#1e293b';
+    ctx.font = 'bold 36px Arial, sans-serif';
+    ctx.fillText(formatDuration(result.timeSpentSeconds), 106, 766);
 
-    const safeSubject = String(result.subject).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'subject';
-    const filename = `boardprep-report-class-${result.class}-${safeSubject}.jpg`;
-    canvas.toBlob((blob) => {
-      if (!blob) {
-        window.alert('The report image could not be created. Please try again.');
-        return;
-      }
-      const url = URL.createObjectURL(blob);
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '16px Arial, sans-serif';
+    ctx.fillText('Generated by BoardPrep Lab', 78, 828);
+
+    const safeClass = String(result.class || 'class').replace(/[^a-z0-9_-]/gi, '-');
+    const safeSubject = String(result.subject || 'subject').toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'subject';
+    const filename = `boardprep-report-class-${safeClass}-${safeSubject}.jpg`;
+
+    function saveImageUrl(url) {
       const link = document.createElement('a');
       link.href = url;
       link.download = filename;
+      link.style.display = 'none';
       document.body.append(link);
       link.click();
       link.remove();
-      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
-    }, 'image/jpeg', 0.92);
+    }
+
+    if (typeof canvas.toBlob === 'function') {
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          saveImageUrl(canvas.toDataURL('image/jpeg', 0.94));
+          return;
+        }
+        const objectUrl = URL.createObjectURL(blob);
+        saveImageUrl(objectUrl);
+        window.setTimeout(() => URL.revokeObjectURL(objectUrl), 2000);
+      }, 'image/jpeg', 0.94);
+    } else {
+      saveImageUrl(canvas.toDataURL('image/jpeg', 0.94));
+    }
   }
 
   function resetProgress() {
