@@ -15,7 +15,7 @@
   <header class="site-header">
     <a class="brand" href="#top" aria-label="Vidhyashram BoardPrep Lab home">
       <span class="brand-mark" aria-hidden="true">V</span>
-      <span class="brand-copy"><strong>VIDHYASHRAM</strong><small>BOARDPREP LAB · EXAM PRACTICE</small></span>
+      <span class="brand-copy"><strong>VIDHYASHRAM</strong><small>BOARDPREP LAB</small></span>
     </a>
     <div class="header-right">
       <span class="privacy-note"><span class="privacy-dot"></span> No login · Progress saved on this device</span>
@@ -26,8 +26,9 @@
   <main id="top" class="page-shell">
     <section class="hero">
       <div class="hero-copy">
-        <p class="eyebrow">VIDHYASHRAM · LEARN WITH PURPOSE</p>
-        <h1>Prepare with purpose.<br><span>Perform with confidence.</span></h1>
+        <p class="eyebrow">LEARN WITH PURPOSE · PREPARE WITH CONFIDENCE</p>
+        <h1 class="academy-title">VIDHYASHRAM</h1>
+        <p class="academy-subtitle">BOARDPREP LAB</p>
         <p class="hero-subtitle">Practice, previous-year questions and full-paper mock exams for Classes 10 and 12.</p>
       </div>
       <div class="hero-stamp" aria-hidden="true"><span>LEARN</span><b>·</b><span>PRACTISE</span><b>·</b><span>IMPROVE</span></div>
@@ -55,26 +56,32 @@
           </div>
 
           <div id="questionModeFields">
-            <div class="field">
-              <label for="classSelect">Class</label>
-              <select id="classSelect">
-                <option value="10">Class 10</option>
-                <option value="12">Class 12</option>
-              </select>
-            </div>
-            <div class="field-row">
-              <div class="field">
-                <label for="boardSelect">Board</label>
-                <select id="boardSelect"></select>
+            <div class="syllabus-picker">
+              <div class="syllabus-picker-heading">
+                <p class="eyebrow">SELECT YOUR SYLLABUS</p>
+                <strong>Board · Class · Subject · Chapter</strong>
+              </div>
+              <div class="field-row">
+                <div class="field">
+                  <label for="boardSelect">Board</label>
+                  <select id="boardSelect" aria-label="Select board"><option value="">Loading boards…</option></select>
+                </div>
+                <div class="field">
+                  <label for="classSelect">Class</label>
+                  <select id="classSelect" aria-label="Select class">
+                    <option value="10">Class 10</option>
+                    <option value="12">Class 12</option>
+                  </select>
+                </div>
               </div>
               <div class="field">
                 <label for="subjectSelect">Subject</label>
-                <select id="subjectSelect"></select>
+                <select id="subjectSelect" aria-label="Select subject"><option value="">Choose a subject</option></select>
               </div>
-            </div>
-            <div class="field">
-              <label for="chapterSelect">Chapter / topic</label>
-              <select id="chapterSelect"><option value="all">All available chapters</option></select>
+              <div class="field">
+                <label for="chapterSelect">Chapter / topic</label>
+                <select id="chapterSelect" aria-label="Select chapter"><option value="all">All available chapters</option></select>
+              </div>
             </div>
             <div class="field">
               <label for="difficultySelect">Difficulty</label>
