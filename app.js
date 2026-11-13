@@ -38,7 +38,6 @@
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
     } catch (error) {
-      // The current session still works if browser storage is unavailable or full.
       console.warn('Could not save practice history in this browser.', error);
     }
   }
@@ -190,8 +189,7 @@
     if (text !== undefined && text !== null) node.textContent = String(text);
     return node;
   }
-
-  function renderQuestion() {
+    function renderQuestion() {
     if (!session) return;
     const q = session.questions[session.index];
     const total = session.questions.length;
@@ -337,7 +335,7 @@
     renderQuestion();
   }
 
-  function finishSession(timeExpired = false) {
+    function finishSession(timeExpired = false) {
     if (!session || session.saved) return;
     stopTimer();
     const outcomes = session.questions.map((q) => {
@@ -353,10 +351,11 @@
     const maxMarks = outcomes.reduce((sum, item) => sum + item.marks, 0);
     const accuracy = attemptedCount ? (correctCount / attemptedCount) * 100 : 0;
     const percentage = maxMarks ? (score / maxMarks) * 100 : 0;
+          const timeSpentSeconds = Math.max(0, Math.floor((Date.now() - session.startedAt) / 1000));
     const result = {
       date: new Date().toISOString(), class: session.scope.class, board: session.scope.board, subject: session.scope.subject,
       mode: session.mode, score, maxMarks, percentage, accuracy, correctCount, wrongCount,
-      attemptedCount, totalQuestions: outcomes.length, timeExpired, outcomes
+      attemptedCount, totalQuestions: outcomes.length, timeSpentSeconds, timeExpired, outcomes
     };
     session.saved = true;
     latestResult = result;
@@ -456,31 +455,68 @@
       });
     }
   }
-
-  function downloadResult() {
-    if (!latestResult) return;
-    const lines = [
-      ['BoardPrep Lab progress report'],
-      ['Class', latestResult.class], ['Board', latestResult.board], ['Subject', latestResult.subject],
-      ['Date', new Date(latestResult.date).toLocaleString()], ['Mode', latestResult.mode],
-      ['Score', `${latestResult.score}/${latestResult.maxMarks}`], ['Percentage', `${latestResult.percentage.toFixed(1)}%`],
-      ['Accuracy', `${latestResult.accuracy.toFixed(1)}%`], ['Correct', latestResult.correctCount], ['Incorrect', latestResult.wrongCount],
-      [], ['Question', 'Topic', 'Your answer', 'Accepted answer', 'Result', 'Explanation']
+      const metrics = [
+      { label: 'TOTAL QUESTIONS', value: String(result.totalQuestions) },
+      { label: 'ATTEMPTED', value: String(result.attemptedCount) },
+      { label: 'CORRECT', value: String(result.correctCount) },
+      { label: 'WRONG', value: String(result.wrongCount) },
+      { label: 'ACCURACY', value: `${Number(result.accuracy).toFixed(1)}%` },
+      { label: 'PERCENTAGE', value: `${Number(result.percentage).toFixed(1)}%` }
     ];
-    latestResult.outcomes.forEach((item, index) => lines.push([
-      `Q${index + 1}: ${item.prompt}`, item.topic, item.response || 'Not answered', item.answer,
-      item.correct ? 'Correct' : (item.attempted ? 'Incorrect' : 'Skipped'), item.explanation
-    ]));
-    const csv = lines.map((row) => row.map((cell) => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(',')).join('\r\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `boardprep-report-class-${latestResult.class}-${latestResult.subject.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.csv`;
-    document.body.append(link);
-    link.click();
-    link.remove();
-    URL.revokeObjectURL(url);
+    const cardW = 330;
+    const cardH = 145;
+    const gapX = 36;
+    const gapY = 28;
+    const left = 72;
+    const top = 400;
+
+    metrics.forEach((metric, index) => {
+      const col = index % 3;
+      const row = Math.floor(index / 3);
+      const x = left + col * (cardW + gapX);
+      const y = top + row * (cardH + gapY);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(x, y, cardW, cardH);
+      ctx.strokeStyle = '#dbe3ef';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x, y, cardW, cardH);
+      ctx.fillStyle = '#64748b';
+      ctx.font = 'bold 19px Arial, sans-serif';
+      ctx.fillText(metric.label, x + 24, y + 42);
+      ctx.fillStyle = '#0f172a';
+      ctx.font = 'bold 48px Arial, sans-serif';
+      ctx.fillText(metric.value, x + 24, y + 105);
+    });
+
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(72, 750, 1056, 62);
+    ctx.strokeStyle = '#dbe3ef';
+    ctx.strokeRect(72, 750, 1056, 62);
+    ctx.fillStyle = '#334155';
+    ctx.font = 'bold 23px Arial, sans-serif';
+    ctx.fillText(`TIME SPENT: ${formatDuration(result.timeSpentSeconds)}`, 98, 790);
+    ctx.textAlign = 'right';
+    ctx.font = '20px Arial, sans-serif';
+    ctx.fillStyle = '#64748b';
+    ctx.fillText(result.mode === 'test' ? 'Timed test' : 'Practice session', 1100, 790);
+    ctx.textAlign = 'left';
+
+    const safeSubject = String(result.subject).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'subject';
+    const filename = `boardprep-report-class-${result.class}-${safeSubject}.jpg`;
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        window.alert('The report image could not be created. Please try again.');
+        return;
+      }
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.append(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }, 'image/jpeg', 0.92);
   }
 
   function resetProgress() {
