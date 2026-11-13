@@ -1,13 +1,13 @@
 /*
-  STARTER QUESTION BANK
-  These are original demo questions used to test the platform. They are not a complete
-  syllabus bank or official previous-year questions. Add carefully verified questions
-  using the same field structure below.
+  VIDHYASHRAM · BOARDPREP LAB QUESTION BANK
+  This is the current app-ready bank, not yet a complete syllabus collection.
+  Only questions with a verified year field appear in PYQ Test.
 
   Fields:
   id, class, board, subject, chapter, topic, difficulty, type (mcq | numeric | blank),
-  prompt, options (MCQ only), answer (MCQ option text / number), accepted (blank alternatives),
-  tolerance (numeric), unit (optional display hint), marks, explanation.
+  prompt, options (MCQ only), answer, accepted (blank alternatives), tolerance, unit, marks,
+  explanation. For verified previous-year questions also add: year, isPYQ: true,
+  paperCode or set, and questionNumber. Do not guess source years or answer keys.
 */
 window.QUESTION_BANK = [
   // CLASS 10 · CBSE · MATHEMATICS

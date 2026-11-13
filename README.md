@@ -1,130 +1,101 @@
-# BoardPrep Lab — starter project
+# Vidhyashram · BoardPrep Lab
 
-A mobile-friendly, static board-exam practice website for:
+A static, mobile-friendly test practice site for Classes 10 and 12.
 
-- Class 10 — CBSE — Mathematics and Science
-- Class 12 — CBSE — Physics, Chemistry and Mathematics
-- Class 12 — ISC — Physics, Chemistry and Mathematics
+## What's included
 
-## What works in this starter version
-
-- Chapter and difficulty filters
-- Practice mode with immediate checking and explanations
-- Timed test mode with automatic submission when time runs out
-- MCQ, numerical and fill-in-the-blank checking
-- Random question selection from the available question bank
-- Score, percentage, accuracy and answer review
-- Basic topic-level practice insights
-- CSV download of a completed test report
-- Local progress history in the current browser/device
-- No sign-up, database, API key or backend required
-
-## Important limitations
-
-1. The questions in `questions.js` are original demo questions intended to test the software. They are not a complete syllabus, a verified PYQ collection or an official board paper bank.
-2. The answer key is delivered to the browser. This is a practice website, not a secure examination system.
-3. Progress is saved in local browser storage. It does not sync across devices or browsers and may be lost if browser data is cleared.
-4. Descriptive responses are not automatically marked. Use model answers/marking schemes for self-assessment.
-5. The first version is deliberately static so it can be hosted free on GitHub Pages.
+- **Practice Test** — builds a question set from the selected class, board, subject and chapter.
+- **Timed Test** — the same question-bank flow with a countdown timer.
+- **PYQ Test** — uses only questions with a verified `year` field in `questions.js`. It shows the year and paper/set label with the question. The current 79-question app-ready bank does not yet contain verified year metadata, so the PYQ mode will correctly show no available questions until verified PYQs are tagged.
+- **Mock Test** — loads the exact teacher-uploaded PDF associated with the student's mock code. It does not shuffle or generate questions. Students can view, open/print or download the PDF. The timer is configured for each paper.
+- **One active test** — an unfinished session is saved in local storage, restored after refresh and shared across tabs in the same browser profile. Previous app progress is migrated from the older BoardPrep Lab storage key. A second test cannot start until the active one is submitted or its timer ends.
+- **Post-submission review** — correct answers and explanations appear only after submission, never while a test is running.
+- **Revision tools** — question navigator, mark-for-review, save-question, retry-mistakes and saved-question revision.
+- **Progress** — chapter-level performance, recent sessions and downloadable JPG test report.
 
 ## Files
 
-- `index.html` — page structure
-- `styles.css` — visual design and responsive layout
-- `app.js` — test engine, checking, timer, progress and reports
-- `questions.js` — editable question bank
+- `index.html` — page structure and academy branding.
+- `styles.css` — responsive mobile-first design.
+- `app.js` — test flow, timer, active-session lock, result checking and progress.
+- `questions.js` — current app-ready question bank.
+- `mock-papers.js` — teacher-maintained list of published mock codes and paper metadata.
+- `mock-papers/` — place mock-paper PDFs in this folder.
 
-## Add or edit questions
+## Publish/update on GitHub Pages
 
-Open `questions.js` and add objects to `window.QUESTION_BANK` using the same structure as the examples. Every question needs a unique `id`.
+1. Open the repository that currently hosts BoardPrep Lab.
+2. Replace `index.html`, `styles.css`, `app.js` and `questions.js` with the matching files from this project.
+3. Add `mock-papers.js` at the repository root.
+4. Add the `mock-papers/` folder if you have PDF papers to publish.
+5. Commit the changes. GitHub Pages will update the site after its deployment finishes.
 
-### Multiple choice
+Keep all file names and lower/upper case exactly as shown. The script order at the bottom of `index.html` must remain: `questions.js`, `mock-papers.js`, then `app.js`.
 
-```js
-{
-  id: '10m06',
-  class: '10',
-  board: 'CBSE',
-  subject: 'Mathematics',
-  chapter: 'Triangles',
-  topic: 'Similarity criteria',
-  difficulty: 'Moderate',
-  type: 'mcq',
-  prompt: 'Which condition is sufficient to establish similarity of two triangles?',
-  options: ['AAA', 'Only one equal side', 'Only one equal angle', 'No equal angles'],
-  answer: 'AAA',
-  marks: 1,
-  explanation: 'If corresponding angles are equal, the triangles are similar by the AAA criterion.'
-}
-```
+## Add a verified PYQ
 
-### Numerical
+A question appears in PYQ Test only when it has a confirmed year. Add the metadata to that question object in `questions.js`:
 
 ```js
 {
-  id: '12cbp05',
-  class: '12',
-  board: 'CBSE',
-  subject: 'Physics',
-  chapter: 'Current Electricity',
-  topic: 'Ohm’s law',
-  difficulty: 'Easy',
-  type: 'numeric',
-  prompt: 'A 2 Ω resistor carries 3 A. Find the potential difference.',
-  answer: 6,
-  tolerance: 0.01,
-  unit: 'V',
-  marks: 2,
-  explanation: 'V = IR = 3 × 2 = 6 V.'
-}
-```
-
-### Fill in the blank
-
-```js
-{
-  id: '10s06',
+  id: '10s-pyq-2023-01',
   class: '10',
   board: 'CBSE',
   subject: 'Science',
-  chapter: 'Chemical Reactions and Equations',
-  topic: 'Oxidation',
-  difficulty: 'Easy',
-  type: 'blank',
-  prompt: 'Gain of oxygen is called ______.',
-  accepted: ['oxidation'],
+  chapter: 'Electricity',
+  topic: 'Ohm law',
+  difficulty: 'Moderate',
+  type: 'mcq',
+  prompt: 'Question text...',
+  options: ['Option A', 'Option B', 'Option C', 'Option D'],
+  answer: 'Option B',
+  year: 2023,
+  isPYQ: true,
+  paperCode: 'Set 1',
+  questionNumber: 12,
   marks: 1,
-  explanation: 'Gain of oxygen is oxidation.'
+  explanation: 'Verified explanation...'
 }
 ```
 
-Allowed values:
+Only add `year`, `paperCode`/`set` and `questionNumber` after checking the original paper. The PYQ test will preserve paper/question order rather than randomly shuffling the PYQs.
 
-- `class`: `'10'` or `'12'`
-- `board`: `'CBSE'` or `'ISC'`
-- `subject`: use the subject names exactly as shown in the existing bank (`Mathematics`, `Science`, `Physics`, `Chemistry`)
-- `difficulty`: `'Easy'`, `'Moderate'` or `'Difficult'`
-- `type`: `'mcq'`, `'numeric'` or `'blank'`
+## Add a Mock Test
 
-For a numerical, `tolerance` is the allowed absolute difference. For a fill-in-the-blank, provide all accepted alternatives in `accepted`.
+1. Put the complete question paper PDF in `mock-papers/`, for example `mock-papers/class10-science-mock01.pdf`.
+2. Open `mock-papers.js` and add a new object to `window.MOCK_PAPERS`:
 
-## Publish free with GitHub Pages
+```js
+window.MOCK_PAPERS = [
+  {
+    code: 'VID10SCI-M01',
+    title: 'Class 10 Science · Full Syllabus Mock 1',
+    class: '10',
+    board: 'CBSE',
+    subject: 'Science',
+    durationMinutes: 180,
+    maxMarks: 80,
+    pdf: 'mock-papers/class10-science-mock01.pdf',
+    instructions: 'Read all instructions printed on the paper.'
+  }
+];
+```
 
-1. Create or sign in to a GitHub account.
-2. Create a **public** repository, for example `boardprep-lab`.
-3. Upload all four project files (`index.html`, `styles.css`, `app.js`, `questions.js`) and this README. Keep them in the repository's top/root folder.
-4. In the repository, open **Settings → Pages**.
-5. Under **Build and deployment**, choose **Deploy from a branch**.
-6. Select branch **main** and folder **/(root)**, then save.
-7. Wait for GitHub Pages to publish. The address will be similar to `https://YOUR-USERNAME.github.io/boardprep-lab/`.
+3. Add more papers as more objects in that same array. Each code must be unique.
+4. Set `durationMinutes` and `maxMarks` according to that exact class/subject paper. The website uses the values you provide; it does not guess the duration.
+5. Commit `mock-papers.js` and the PDF. Students enter the matching code under Mock Test, preview the paper details, and can open/print or download the PDF before starting the timer. The timer begins only after they press “Start timer and open test”.
 
-GitHub's menus can change. Use the Pages section shown in the repository Settings if the labels differ.
+### Important hosting limitation
 
-## Before sharing with students
+This site uses GitHub Pages, which is public static hosting. The mock code is a **paper selector**, not secure authentication. The code list and PDF paths can be inspected by anyone who can access the repository/site, and a PDF URL may be shared directly. Do not upload confidential or unreleased examination papers that must be restricted to selected students. A truly private teacher upload portal requires a backend with student authentication and protected file storage.
 
-- Test every question and every answer key.
-- Open the site on at least one Android phone and one desktop/laptop.
-- Try each class/board/subject combination.
-- Test timer expiry and CSV download.
-- Add a short privacy note for students: progress remains in that browser, and the site does not ask for personal details.
-- Do not upload confidential student records or private examination material.
+The timer is enforced by the browser app. It cannot control a PDF after a student has downloaded or printed a copy, nor can local browser storage synchronize test status across devices.
+
+## Local data
+
+Progress, bookmarks, mistake lists and an active session are stored in the student's browser using local storage. Clearing browser data or changing device/browser removes that local record. There is no student account or central teacher dashboard in this static version.
+
+
+### Answer-key and exam-security limitation
+
+The interface hides correct answers and explanations until submission, as requested. However, the question bank and its answer keys are delivered to the student's browser in `questions.js`; a technically capable user can inspect those files before submitting. For high-stakes examinations with protected answer keys, scoring and papers, use a backend that serves questions securely and checks answers server-side.
