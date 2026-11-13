@@ -1,69 +1,53 @@
 # Vidhyashram · BoardPrep Lab
 
-A static, mobile-friendly test practice site for Classes 10 and 12.
+A mobile-friendly CBSE/ISC practice and PYQ platform with a separate computer-based test screen inspired by the NTA/JEE question-palette workflow. This is an educational interface inspired by common CBT patterns, not an official NTA product or a secure proctoring client.
 
-## What's included
+## Student flow
 
-- **Practice Test** — builds a question set from the selected class, board, subject and chapter.
-- **Timed Test** — the same question-bank flow with a countdown timer.
-- **PYQ Test** — uses only questions with a verified `year` field in `questions.js`. It shows the year and paper/set label with the question. The current 79-question app-ready bank does not yet contain verified year metadata, so the PYQ mode will correctly show no available questions until verified PYQs are tagged.
-- **Mock Test** — loads the exact teacher-uploaded PDF associated with the student's mock code. It does not shuffle or generate questions. Students can view, open/print or download the PDF. The timer is configured for each paper.
-- **One active test** — an unfinished session is saved in local storage, restored after refresh and shared across tabs in the same browser profile. Previous app progress is migrated from the older BoardPrep Lab storage key. A second test cannot start until the active one is submitted or its timer ends.
-- **Post-submission review** — correct answers and explanations appear only after submission, never while a test is running.
-- **Revision tools** — question navigator, mark-for-review, save-question, retry-mistakes and saved-question revision.
-- **Progress** — chapter-level performance, recent sessions and downloadable JPG test report.
+1. **Test setup (`index.html`)** — select Board, Class, Subject, Chapter/topic, test type, question count and (for timed tests) duration.
+2. **Exam hall (`exam.html`)** — a separate screen with timer, question palette, question status colours, answer controls, mark-for-review, clear response, save-and-next and optional full-screen mode. The palette allows direct navigation among questions.
+3. **Submission and review** — students see the submission summary, automatic score where a verified auto-gradable bank item exists, and imported source questions awaiting teacher checking. Answers are not shown before submission.
 
-## Files
+An active test is saved locally and resumes after refresh. Opening the setup page while a test is active redirects to the exam hall. The browser Back action is guarded while the session is active. This is an app-level navigation guard, not an operating-system kiosk lock.
 
-- `index.html` — page structure and academy branding.
-- `styles.css` — responsive mobile-first design.
-- `app.js` — test flow, timer, active-session lock, result checking and progress.
-- `questions.js` — current app-ready question bank.
-- `mock-papers.js` — teacher-maintained list of published mock codes and paper metadata.
-- `mock-papers/` — place mock-paper PDFs in this folder.
+## Question bank included
+
+- **79 existing app-ready questions** in `questions.js`, with their existing automatic marking behaviour.
+- **624 Class 10 CBSE Science source questions** across 13 chapters, tagged to the 2023 paper collection.
+- **125 Class 12 CBSE Physics source questions** across 8 chapters, tagged to the 2026 paper collection.
+- **749 imported source questions total**, with chapter, year, paper/set code, source question number and a cropped original question image. The image is shown in each imported question so students can check diagrams, symbols and options against the original.
+- Source MCQs use A/B/C/D response controls. Written and case-based questions use a saved text response for manual teacher checking.
+
+### Important source-question grading note
+
+Imported PYQ answer keys are **not used for automatic marking yet**. The Science source transcription has 240 objective answer letters from matching 2023 marking schemes and 80 objective items without a confirmed key. The Physics archive contains 125 answer letters copied from its chapter key tables, but these have not been independently verified. OCR can misread mathematical symbols, diagrams and option order. The answer key and OCR text should be checked against the supplied original question image before enabling automatic grading. Written/case-based questions are not auto-marked. This is deliberate to avoid incorrect student results.
+
+## Project files
+
+- `index.html` — home and test setup page.
+- `exam.html` — dedicated test-taking page.
+- `styles.css` — responsive home and NTA/JEE-inspired exam interface.
+- `app.js` — test selection, timer, exam navigation guard, response persistence and results.
+- `questions.js` — the original 79 app-ready questions.
+- `source-questions.js` — the imported 749-question source bank.
+- `assets/pyq/` — original question images, one WebP per imported source question. Preserve the folder path.
+- `mock-papers.js` and `mock-papers/` — teacher-managed mock paper codes and PDFs.
 
 ## Publish/update on GitHub Pages
 
-1. Open the repository that currently hosts BoardPrep Lab.
-2. Replace `index.html`, `styles.css`, `app.js` and `questions.js` with the matching files from this project.
-3. Add `mock-papers.js` at the repository root.
-4. Add the `mock-papers/` folder if you have PDF papers to publish.
-5. Commit the changes. GitHub Pages will update the site after its deployment finishes.
+Upload the **complete contents** of this project ZIP to the repository root, preserving the `assets/pyq/` folder and the `mock-papers/` folder. Replace matching files and add new ones. In particular, do not omit `exam.html`, `source-questions.js`, or any files under `assets/pyq/`. Then commit the changes to the GitHub Pages branch.
 
-Keep all file names and lower/upper case exactly as shown. The script order at the bottom of `index.html` must remain: `questions.js`, `mock-papers.js`, then `app.js`.
+The script order in both `index.html` and `exam.html` must remain:
 
-## Add a verified PYQ
-
-A question appears in PYQ Test only when it has a confirmed year. Add the metadata to that question object in `questions.js`:
-
-```js
-{
-  id: '10s-pyq-2023-01',
-  class: '10',
-  board: 'CBSE',
-  subject: 'Science',
-  chapter: 'Electricity',
-  topic: 'Ohm law',
-  difficulty: 'Moderate',
-  type: 'mcq',
-  prompt: 'Question text...',
-  options: ['Option A', 'Option B', 'Option C', 'Option D'],
-  answer: 'Option B',
-  year: 2023,
-  isPYQ: true,
-  paperCode: 'Set 1',
-  questionNumber: 12,
-  marks: 1,
-  explanation: 'Verified explanation...'
-}
-```
-
-Only add `year`, `paperCode`/`set` and `questionNumber` after checking the original paper. The PYQ test will preserve paper/question order rather than randomly shuffling the PYQs.
+1. `questions.js`
+2. `source-questions.js`
+3. `mock-papers.js`
+4. `app.js`
 
 ## Add a Mock Test
 
-1. Put the complete question paper PDF in `mock-papers/`, for example `mock-papers/class10-science-mock01.pdf`.
-2. Open `mock-papers.js` and add a new object to `window.MOCK_PAPERS`:
+1. Put the complete teacher-approved PDF in `mock-papers/`.
+2. Register its code in `mock-papers.js`, for example:
 
 ```js
 window.MOCK_PAPERS = [
@@ -81,21 +65,15 @@ window.MOCK_PAPERS = [
 ];
 ```
 
-3. Add more papers as more objects in that same array. Each code must be unique.
-4. Set `durationMinutes` and `maxMarks` according to that exact class/subject paper. The website uses the values you provide; it does not guess the duration.
-5. Commit `mock-papers.js` and the PDF. Students enter the matching code under Mock Test, preview the paper details, and can open/print or download the PDF before starting the timer. The timer begins only after they press “Start timer and open test”.
+3. Use a unique code and set the duration and marks for that exact paper.
+4. Commit the JS file and PDF. Students enter the code, review the paper details, and can open/print or download the paper before starting the timer. The full paper is displayed in the separate exam hall. Mock papers are manually checked by the teacher, as requested.
 
-### Important hosting limitation
+## Static-hosting limitations
 
-This site uses GitHub Pages, which is public static hosting. The mock code is a **paper selector**, not secure authentication. The code list and PDF paths can be inspected by anyone who can access the repository/site, and a PDF URL may be shared directly. Do not upload confidential or unreleased examination papers that must be restricted to selected students. A truly private teacher upload portal requires a backend with student authentication and protected file storage.
+GitHub Pages is public static hosting. Mock codes are paper selectors, not secure authentication. A published PDF can be opened directly, and the JavaScript question bank and answer keys can be inspected by a technically capable user. The browser cannot prevent developer tools, downloads, a second device or clearing local storage. The active-test guard applies within the same browser profile/device; it is not a cross-device lock or proctoring system. Full-screen mode is optional and browser-controlled.
 
-The timer is enforced by the browser app. It cannot control a PDF after a student has downloaded or printed a copy, nor can local browser storage synchronize test status across devices.
+For confidential papers, protected answer keys, centralized student accounts, server-side scoring and true exam controls, the site would need a backend with authentication and protected storage.
 
 ## Local data
 
-Progress, bookmarks, mistake lists and an active session are stored in the student's browser using local storage. Clearing browser data or changing device/browser removes that local record. There is no student account or central teacher dashboard in this static version.
-
-
-### Answer-key and exam-security limitation
-
-The interface hides correct answers and explanations until submission, as requested. However, the question bank and its answer keys are delivered to the student's browser in `questions.js`; a technically capable user can inspect those files before submitting. For high-stakes examinations with protected answer keys, scoring and papers, use a backend that serves questions securely and checks answers server-side.
+Progress, bookmarks, mistakes and active tests are stored in the student's browser. Clearing browser data or changing device/browser removes that local record. There is no central teacher dashboard or account system in this static version.

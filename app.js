@@ -8,6 +8,7 @@
   const ACTIVE_KEY = 'vidhyashram-boardprep-active-v2';
   const TAB_ID = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
   const $ = (id) => document.getElementById(id);
+  const isExamPage = document.body.classList.contains('exam-page');
 
   const els = {
     setupForm: $('setupForm'), questionModeFields: $('questionModeFields'), mockConfigWrap: $('mockConfigWrap'),
@@ -23,8 +24,9 @@
     sessionMeta: $('sessionMeta'), sessionTitle: $('sessionTitle'), timerBox: $('timerBox'), timerText: $('timerText'),
     testProgressArea: $('testProgressArea'), questionCounter: $('questionCounter'), answeredCounter: $('answeredCounter'),
     progressFill: $('progressFill'), questionNavigator: $('questionNavigator'), questionArea: $('questionArea'),
-    questionNav: $('questionNav'), prevBtn: $('prevBtn'), nextBtn: $('nextBtn'), markReviewBtn: $('markReviewBtn'),
-    bookmarkBtn: $('bookmarkBtn'), finishBtn: $('finishBtn'), exitSessionBtn: $('exitSessionBtn'), sessionHint: $('sessionHint'),
+    questionNav: $('questionNav'), fullscreenBtn: $('fullscreenBtn'), prevBtn: $('prevBtn'), nextBtn: $('nextBtn'), markReviewBtn: $('markReviewBtn'),
+    bookmarkBtn: $('bookmarkBtn'), clearResponseBtn: $('clearResponseBtn'), markNextBtn: $('markNextBtn'), finishBtn: $('finishBtn'), exitSessionBtn: $('exitSessionBtn'), sessionHint: $('sessionHint'),
+    submitDialog: $('submitDialog'), submitSummary: $('submitSummary'), cancelSubmitBtn: $('cancelSubmitBtn'), keepTestingBtn: $('keepTestingBtn'), confirmSubmitBtn: $('confirmSubmitBtn'),
     activeLockNotice: $('activeLockNotice'), savedRevisionBtn: $('savedRevisionBtn'), mistakeRevisionBtn: $('mistakeRevisionBtn'),
     savedCount: $('savedCount'), mistakeCount: $('mistakeCount'), resultScore: $('resultScore'), resultPercent: $('resultPercent'),
     resultAccuracy: $('resultAccuracy'), resultAttempted: $('resultAttempted'), resultCorrect: $('resultCorrect'),
@@ -151,7 +153,8 @@
     const subjects = uniqueSorted(bank.filter((q) => q.class === cls && q.board === board).map((q) => q.subject));
     const previous = els.subjectSelect.value;
     setSelectOptions(els.subjectSelect, subjects, 'Choose a subject', '');
-    els.subjectSelect.value = subjects.includes(previous) ? previous : (subjects[0] || '');
+    const preferred = cls === '10' && board === 'CBSE' ? 'Science' : (cls === '12' && board === 'CBSE' ? 'Physics' : '');
+    els.subjectSelect.value = subjects.includes(previous) ? previous : (subjects.includes(preferred) ? preferred : (subjects[0] || ''));
     refreshChapterOptions();
   }
 
@@ -248,6 +251,7 @@
       questions,
       answers: {},
       marked: {},
+      visited: {},
       index: 0,
       startedAt: now,
       durationSeconds,
@@ -377,7 +381,12 @@
 
   function beginActiveSession() {
     persistActiveSession();
+    if (!isExamPage) {
+      window.location.assign('exam.html');
+      return;
+    }
     renderActiveSession(true);
+    lockExamNavigation();
   }
 
   function renderActiveSession(startClock) {
@@ -408,6 +417,7 @@
     els.resultPanel.classList.add('hidden');
     els.mockCompletePanel.classList.add('hidden');
     els.sessionPanel.classList.remove('hidden');
+    els.sessionPanel.classList.toggle('mock-session-active', session.mode === 'mock');
     els.sessionMeta.textContent = modeLabel(session.mode);
     els.sessionTitle.textContent = session.title || `${session.scope.subject || 'Test'} · ${session.questions.length} questions`;
     const timed = Boolean(session.endsAt);
@@ -471,6 +481,28 @@
     els.sessionHint.textContent = 'Timer is running. The PDF can be viewed here or opened for printing / download.';
   }
 
+  function updateFullscreenButton() {
+    if (!els.fullscreenBtn) return;
+    els.fullscreenBtn.textContent = document.fullscreenElement ? 'Exit full screen' : 'Enter full screen';
+    els.fullscreenBtn.setAttribute('aria-pressed', String(Boolean(document.fullscreenElement)));
+  }
+
+  function toggleFullscreen() {
+    if (document.fullscreenElement) {
+      if (document.exitFullscreen) document.exitFullscreen().catch(() => {
+        els.sessionHint.textContent = 'Your browser did not allow full-screen mode. The test will continue normally.';
+      });
+      return;
+    }
+    if (!document.documentElement.requestFullscreen) {
+      els.sessionHint.textContent = 'Full-screen mode is not supported by this browser. The test will continue normally.';
+      return;
+    }
+    document.documentElement.requestFullscreen().catch(() => {
+      els.sessionHint.textContent = 'Full-screen mode was not allowed. You can still continue the test normally.';
+    });
+  }
+
   function stopTimer() {
     if (timerInterval !== null) window.clearInterval(timerInterval);
     timerInterval = null;
@@ -486,6 +518,7 @@
       ? `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
       : `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
     els.timerBox.classList.toggle('timer-danger', remaining <= 60);
+    els.timerBox.classList.toggle('timer-warning', remaining > 60 && remaining <= 300);
     if (remaining <= 0) {
       stopTimer();
       finishSession(true);
@@ -507,27 +540,56 @@
     if (!session || session.mode === 'mock') return;
     els.questionNavigator.replaceChildren();
     session.questions.forEach((question, index) => {
-      const button = makeElement('button', 'navigator-button', String(index + 1));
+      const answered = questionIsAnswered(question);
+      const marked = Boolean(session.marked?.[question.id]);
+      const visited = Boolean(session.visited?.[question.id]) || index === session.index;
+      let stateClass = 'not-visited';
+      let stateLabel = 'not visited';
+      if (answered && marked) { stateClass = 'answered-marked'; stateLabel = 'answered and marked for review'; }
+      else if (marked) { stateClass = 'marked'; stateLabel = 'marked for review'; }
+      else if (answered) { stateClass = 'answered'; stateLabel = 'answered'; }
+      else if (visited) { stateClass = 'not-answered'; stateLabel = 'not answered'; }
+      const button = makeElement('button', `navigator-button ${stateClass}`, String(index + 1));
       button.type = 'button';
-      button.setAttribute('aria-label', `Go to question ${index + 1}${questionIsAnswered(question) ? ', answered' : ', unanswered'}${session.marked[question.id] ? ', marked for review' : ''}`);
+      button.setAttribute('aria-label', `Question ${index + 1}, ${stateLabel}${index === session.index ? ', current question' : ''}`);
       if (index === session.index) button.classList.add('current');
-      if (questionIsAnswered(question)) button.classList.add('answered');
-      if (session.marked[question.id]) button.classList.add('marked');
       button.addEventListener('click', () => goToQuestion(index));
       els.questionNavigator.append(button);
     });
+    const answered = session.questions.filter(questionIsAnswered).length;
+    els.answeredCounter.textContent = `${answered} of ${session.questions.length} answered`;
+  }
+
+  function renderSourceImage(question) {
+    if (!question.sourceImage) return;
+    const details = makeElement('details', 'source-image-details');
+    const summary = makeElement('summary', '', 'Original paper image (tap to collapse)');
+    details.open = true;
+    const image = document.createElement('img');
+    image.src = question.sourceImage;
+    image.alt = `Original ${question.subject || ''} question ${question.questionNumber || ''} from paper ${question.paperCode || ''}`;
+    image.loading = 'lazy';
+    details.append(summary, image);
+    els.questionArea.append(details);
   }
 
   function renderQuestion() {
     if (!session || session.mode === 'mock') return;
     const question = session.questions[session.index];
     const total = session.questions.length;
+    session.answers = session.answers || {};
+    session.marked = session.marked || {};
+    session.visited = session.visited || {};
+    session.visited[question.id] = true;
+    persistActiveSession();
     els.questionCounter.textContent = `Question ${session.index + 1} of ${total}`;
     els.progressFill.style.width = `${((session.index + 1) / total) * 100}%`;
     els.prevBtn.disabled = session.index === 0;
     els.nextBtn.classList.toggle('hidden', session.index === total - 1);
     els.finishBtn.classList.remove('hidden');
     els.markReviewBtn.textContent = session.marked[question.id] ? 'Unmark review' : 'Mark for review';
+    els.markNextBtn.textContent = session.marked[question.id] ? 'Next question' : 'Mark & Next';
+    els.clearResponseBtn.disabled = !questionIsAnswered(question);
     const saved = progress.bookmarks.includes(question.id);
     els.bookmarkBtn.textContent = saved ? '★ Saved' : '☆ Save question';
     els.bookmarkBtn.classList.toggle('is-saved', saved);
@@ -535,36 +597,64 @@
 
     const kicker = makeElement('div', 'question-kicker');
     kicker.append(makeElement('span', '', question.chapter || 'General'));
-    if (question.difficulty) kicker.append(makeElement('span', '', question.difficulty));
+    if (question.difficulty && question.type !== 'written' && question.type !== 'source-mcq') kicker.append(makeElement('span', '', question.difficulty));
     kicker.append(makeElement('span', 'marks-tag', `${question.marks || 1} mark${Number(question.marks || 1) === 1 ? '' : 's'}`));
     if (isVerifiedPyq(question)) {
-      const pyqLabel = `${question.board || session.scope.board || 'PYQ'} ${question.year}${question.set ? ` · ${question.set}` : (question.paperCode ? ` · ${question.paperCode}` : '')}`;
+      const pyqLabel = `${question.board || session.scope.board || 'PYQ'} ${question.year}${question.paperCode ? ` · ${question.paperCode}` : ''}${question.questionNumber ? ` · Q${question.questionNumber}` : ''}`;
       kicker.append(makeElement('span', 'year-tag', pyqLabel));
     }
     els.questionArea.append(kicker);
+    if (question.sourceType) {
+      const sourceLine = makeElement('p', 'source-question-meta', `Original paper ${question.paperCode || question.sourcePaper || 'code not listed'} · Question ${question.questionNumber || '—'} · ${question.year || 'Year unverified'}`);
+      els.questionArea.append(sourceLine);
+    }
     els.questionArea.append(makeElement('h3', 'question-prompt', question.prompt));
+    renderSourceImage(question);
 
-    if (question.type === 'mcq') {
+    if (question.type === 'mcq' || question.type === 'source-mcq') {
       const options = makeElement('div', 'question-options');
-      (question.options || []).forEach((option, index) => {
+      const choiceValues = question.type === 'source-mcq' ? ['A', 'B', 'C', 'D'] : (question.options || []);
+      choiceValues.forEach((option, index) => {
+        const value = String(option);
         const label = makeElement('label', 'option-label');
-        if (session.answers[question.id] === option) label.classList.add('selected');
+        if (session.answers[question.id] === value) label.classList.add('selected');
         const radio = document.createElement('input');
         radio.type = 'radio';
         radio.name = `answer-${question.id}`;
-        radio.value = option;
-        radio.checked = session.answers[question.id] === option;
+        radio.value = value;
+        radio.checked = session.answers[question.id] === value;
         radio.addEventListener('change', () => {
-          session.answers[question.id] = option;
+          session.answers[question.id] = value;
           options.querySelectorAll('.option-label').forEach((item) => item.classList.remove('selected'));
           label.classList.add('selected');
           persistActiveSession();
+          els.clearResponseBtn.disabled = false;
           updateAnsweredCounter();
         });
-        label.append(radio, makeElement('span', '', `${String.fromCharCode(65 + index)}. ${option}`));
+        const labelText = question.type === 'source-mcq' ? `Option ${value}` : `${String.fromCharCode(65 + index)}. ${option}`;
+        label.append(radio, makeElement('span', '', labelText));
         options.append(label);
       });
       els.questionArea.append(options);
+      if (question.type === 'source-mcq') {
+        els.questionArea.append(makeElement('p', 'input-hint', 'The choices are shown in the source question. Select A, B, C or D above. This imported answer key is awaiting teacher verification.'));
+      }
+    } else if (question.type === 'written') {
+      const wrap = makeElement('div', 'answer-input-wrap written-answer-wrap');
+      const input = document.createElement('textarea');
+      input.rows = Number(question.marks || 0) >= 4 ? 7 : (Number(question.marks || 0) >= 2 ? 4 : 2);
+      input.autocomplete = 'off';
+      input.placeholder = 'Write your answer here…';
+      input.setAttribute('aria-label', 'Your written answer');
+      input.value = session.answers[question.id] || '';
+      input.addEventListener('input', () => {
+        session.answers[question.id] = input.value;
+        persistActiveSession();
+        els.clearResponseBtn.disabled = !questionIsAnswered(question);
+        updateAnsweredCounter();
+      });
+      wrap.append(input, makeElement('p', 'input-hint', 'Written response · Saved automatically · To be checked by the teacher, not auto-marked.'));
+      els.questionArea.append(wrap);
     } else {
       const wrap = makeElement('div', 'answer-input-wrap');
       const input = document.createElement('input');
@@ -577,6 +667,7 @@
       input.addEventListener('input', () => {
         session.answers[question.id] = input.value;
         persistActiveSession();
+        els.clearResponseBtn.disabled = !questionIsAnswered(question);
         updateAnsweredCounter();
       });
       wrap.append(input);
@@ -585,8 +676,6 @@
         : 'Capitalisation and extra spaces do not matter.'));
       els.questionArea.append(wrap);
     }
-
-    updateAnsweredCounter();
     updateQuestionNavigator();
   }
 
@@ -606,7 +695,7 @@
   }
 
   function isCorrect(question, response) {
-    if (String(response ?? '').trim() === '') return false;
+    if (String(response ?? '').trim() === '' || question.type === 'source-mcq' || question.type === 'written' || question.gradingStatus === 'pending-review') return false;
     if (question.type === 'mcq') return normaliseText(response) === normaliseText(question.answer);
     if (question.type === 'numeric') {
       const entered = parseNumeric(response);
@@ -619,6 +708,8 @@
   }
 
   function correctAnswerText(question) {
+    if (question.type === 'source-mcq') return question.answerKeyLetter ? `Transcribed source key: ${question.answerKeyLetter} (teacher verification pending)` : 'No confirmed source key';
+    if (question.type === 'written') return 'Written response — teacher evaluation required';
     if (question.type === 'blank') return (question.accepted || [question.answer]).join(' / ');
     if (question.type === 'numeric') return `${question.answer}${question.unit ? ` ${question.unit}` : ''}`;
     return String(question.answer ?? 'Not supplied');
@@ -649,6 +740,23 @@
     renderQuestion();
   }
 
+  function clearCurrentResponse() {
+    if (!session || session.mode === 'mock') return;
+    const question = session.questions[session.index];
+    delete session.answers[question.id];
+    persistActiveSession();
+    renderQuestion();
+  }
+
+  function markReviewAndNext() {
+    if (!session || session.mode === 'mock') return;
+    const question = session.questions[session.index];
+    session.marked[question.id] = true;
+    persistActiveSession();
+    if (session.index < session.questions.length - 1) goToQuestion(session.index + 1);
+    else renderQuestion();
+  }
+
   function toggleBookmark() {
     if (!session || session.mode === 'mock') return;
     const question = session.questions[session.index];
@@ -663,16 +771,28 @@
     if (!session) return;
     if (session.mode === 'mock') {
       const confirmed = window.confirm('End this mock test now? The paper will be recorded as submitted for offline checking.');
-      if (!confirmed) return;
-      finishSession(false);
+      if (confirmed) finishSession(false);
       return;
     }
-    const unanswered = session.questions.filter((question) => !questionIsAnswered(question)).length;
-    const message = unanswered
-      ? `You have ${unanswered} unanswered question(s). Submit the test now? Answers and explanations will become visible after submission.`
-      : 'Submit this test now? Answers and explanations will become visible after submission.';
-    if (!window.confirm(message)) return;
-    finishSession(false);
+    const answered = session.questions.filter(questionIsAnswered).length;
+    const unanswered = session.questions.length - answered;
+    const marked = session.questions.filter((question) => session.marked?.[question.id]).length;
+    const notVisited = session.questions.filter((question, index) => !session.visited?.[question.id] && index !== session.index).length;
+    const pending = session.questions.filter((question) => question.sourceType).length;
+    els.submitSummary.replaceChildren();
+    [
+      ['Answered', answered],
+      ['Not answered', unanswered],
+      ['Marked for review', marked],
+      ['Not visited', notVisited],
+      ['Questions awaiting teacher verification', pending]
+    ].forEach(([label, value]) => {
+      const row = makeElement('div', 'submit-summary-row');
+      row.append(makeElement('span', '', label), makeElement('strong', '', String(value)));
+      els.submitSummary.append(row);
+    });
+    if (typeof els.submitDialog.showModal === 'function') els.submitDialog.showModal();
+    else if (window.confirm(`You answered ${answered} of ${session.questions.length} questions. Submit this test now?`)) finishSession(false);
   }
 
   function finishSession(timeExpired = false) {
@@ -687,7 +807,9 @@
     const outcomes = completedSession.questions.map((question) => {
       const response = completedSession.answers[question.id] ?? '';
       const attempted = String(response).trim() !== '';
-      const correct = attempted && isCorrect(question, response);
+      const pendingReview = question.type === 'source-mcq' || question.type === 'written' || question.gradingStatus === 'pending-review';
+      const gradable = !pendingReview;
+      const correct = gradable && attempted && isCorrect(question, response);
       return {
         id: question.id,
         chapter: question.chapter || 'General',
@@ -697,19 +819,25 @@
         response,
         attempted,
         correct,
+        gradable,
+        pendingReview: pendingReview && attempted,
         answer: correctAnswerText(question),
+        answerKeyLetter: question.answerKeyLetter || null,
         explanation: question.explanation || '',
         marks: Number(question.marks || 1),
         year: question.year || null,
-        set: question.set || question.paperCode || null
+        set: question.set || question.paperCode || null,
+        questionNumber: question.questionNumber || null
       };
     });
     const correctCount = outcomes.filter((item) => item.correct).length;
     const attemptedCount = outcomes.filter((item) => item.attempted).length;
-    const wrongCount = outcomes.filter((item) => item.attempted && !item.correct).length;
-    const score = outcomes.reduce((sum, item) => sum + (item.correct ? item.marks : 0), 0);
-    const maxMarks = outcomes.reduce((sum, item) => sum + item.marks, 0);
-    const accuracy = attemptedCount ? (correctCount / attemptedCount) * 100 : 0;
+    const gradableAttemptedCount = outcomes.filter((item) => item.attempted && item.gradable).length;
+    const pendingReviewCount = outcomes.filter((item) => item.pendingReview).length;
+    const wrongCount = outcomes.filter((item) => item.attempted && item.gradable && !item.correct).length;
+    const score = outcomes.reduce((sum, item) => sum + (item.gradable && item.correct ? item.marks : 0), 0);
+    const maxMarks = outcomes.reduce((sum, item) => sum + (item.gradable ? item.marks : 0), 0);
+    const accuracy = gradableAttemptedCount ? (correctCount / gradableAttemptedCount) * 100 : 0;
     const percentage = maxMarks ? (score / maxMarks) * 100 : 0;
     const result = {
       date: new Date().toISOString(),
@@ -725,6 +853,8 @@
       correctCount,
       wrongCount,
       attemptedCount,
+      gradableAttemptedCount,
+      pendingReviewCount,
       totalQuestions: outcomes.length,
       timeSpentSeconds: Math.max(0, Math.floor((Date.now() - completedSession.startedAt) / 1000)),
       timeExpired,
@@ -736,7 +866,7 @@
     progress.attempts.unshift(result);
     progress.attempts = progress.attempts.slice(0, 100);
     outcomes.forEach((item) => {
-      if (item.attempted && !item.correct && !progress.mistakes.includes(item.id)) progress.mistakes.push(item.id);
+      if (item.gradable && item.attempted && !item.correct && !progress.mistakes.includes(item.id)) progress.mistakes.push(item.id);
       if (item.correct) progress.mistakes = progress.mistakes.filter((id) => id !== item.id);
     });
     progress.mistakes = progress.mistakes.slice(-300);
@@ -783,15 +913,16 @@
   }
 
   function renderResult(result) {
-    els.resultScore.textContent = `${formatNumber(result.score)}/${formatNumber(result.maxMarks)}`;
-    els.resultPercent.textContent = `${Math.round(result.percentage)}% of available marks`;
-    els.resultAccuracy.textContent = `${Math.round(result.accuracy)}%`;
-    els.resultAttempted.textContent = `${result.attemptedCount} attempted`;
+    els.resultScore.textContent = result.maxMarks ? `${formatNumber(result.score)}/${formatNumber(result.maxMarks)}` : 'Pending';
+    els.resultPercent.textContent = result.maxMarks ? `${Math.round(result.percentage)}% of auto-graded marks` : 'No automatic score for this set';
+    els.resultAccuracy.textContent = result.gradableAttemptedCount ? `${Math.round(result.accuracy)}%` : '—';
+    els.resultAttempted.textContent = `${result.attemptedCount} attempted · ${result.pendingReviewCount || 0} pending review`;
     els.resultCorrect.textContent = String(result.correctCount);
-    els.resultWrong.textContent = `${result.wrongCount} incorrect · ${result.totalQuestions - result.attemptedCount} skipped`;
+    els.resultWrong.textContent = `${result.wrongCount} wrong · ${result.totalQuestions - result.attemptedCount} skipped`;
     els.reviewCount.textContent = `${result.totalQuestions} questions`;
     let insight = '';
-    if (result.attemptedCount === 0) insight = 'No answers were attempted in this session. Review the answers below and try a shorter set.';
+    if (result.pendingReviewCount) insight = `${result.pendingReviewCount} attempted source question(s) are saved for teacher checking. Imported PYQ answer keys are shown as transcribed references and are not counted until verified.`;
+    else if (result.attemptedCount === 0) insight = 'No answers were attempted in this session. Review the answers below and try a shorter set.';
     else if (result.accuracy >= 85) insight = 'Strong work. Review the questions you missed so that small gaps do not become repeated mistakes.';
     else if (result.accuracy >= 60) insight = 'A useful practice run. Revisit the incorrect answers and try another set from the same topics.';
     else insight = 'Treat this as a diagnostic, not a judgement. Start with the explanations, revise the listed topics and practise them again.';
@@ -802,13 +933,21 @@
     result.outcomes.forEach((item, index) => {
       const card = makeElement('article', 'review-item');
       const head = makeElement('div', 'review-item-head');
-      head.append(makeElement('b', '', `Q${index + 1} · ${item.chapter}${item.year ? ` · PYQ ${item.year}` : ''}`));
-      head.append(makeElement('span', `review-status ${item.correct ? 'good' : 'bad'}`, item.correct ? `✓ Correct · ${item.marks} mark(s)` : (item.attempted ? '✕ Incorrect' : '— Not attempted')));
+      head.append(makeElement('b', '', `Q${index + 1} · ${item.chapter}${item.year ? ` · PYQ ${item.year}` : ''}${item.set ? ` · ${item.set}` : ''}`));
+      const manualItem = !item.gradable;
+      let statusClass = manualItem ? 'pending' : (item.correct ? 'good' : 'bad');
+      let statusText = manualItem ? (item.attempted ? 'Pending teacher check' : 'Not attempted · not auto-graded') : (item.correct ? `✓ Correct · ${item.marks} mark(s)` : (item.attempted ? '✕ Incorrect' : '— Not attempted'));
+      head.append(makeElement('span', `review-status ${statusClass}`, statusText));
       card.append(head);
       card.append(makeElement('p', 'review-prompt', item.prompt));
       card.append(makeElement('p', 'review-answer', `Your answer: ${item.attempted ? item.response : 'Not answered'}`));
-      card.append(makeElement('p', 'review-answer correct-answer', `Correct answer: ${item.answer}`));
-      if (item.explanation) card.append(makeElement('p', 'review-explanation', item.explanation));
+      if (manualItem) {
+        if (item.answerKeyLetter) card.append(makeElement('p', 'review-answer source-key-note', `Transcribed source key: ${item.answerKeyLetter} · teacher verification pending`));
+        else card.append(makeElement('p', 'review-answer source-key-note', 'No confirmed source key · teacher checking required'));
+      } else {
+        card.append(makeElement('p', 'review-answer correct-answer', `Correct answer: ${item.answer}`));
+        if (item.explanation) card.append(makeElement('p', 'review-explanation', item.explanation));
+      }
       els.reviewList.append(card);
     });
   }
@@ -896,8 +1035,8 @@
       { label: 'ATTEMPTED', value: String(result.attemptedCount) },
       { label: 'CORRECT', value: String(result.correctCount) },
       { label: 'WRONG', value: String(result.wrongCount) },
-      { label: 'ACCURACY', value: `${Number(result.accuracy || 0).toFixed(1)}%` },
-      { label: 'PERCENTAGE', value: `${Number(result.percentage || 0).toFixed(1)}%` }
+      { label: 'ACCURACY', value: result.gradableAttemptedCount === 0 ? '—' : `${Number(result.accuracy || 0).toFixed(1)}%` },
+      { label: 'PERCENTAGE', value: result.maxMarks ? `${Number(result.percentage || 0).toFixed(1)}%` : 'Pending' }
     ];
     const cardWidth = 320;
     const cardHeight = 145;
@@ -938,9 +1077,10 @@
 
   function renderDashboard() {
     const attempts = progress.attempts;
+    const scoredAttempts = attempts.filter((item) => Number(item.maxMarks || 0) > 0);
     els.statAttempts.textContent = String(attempts.length + progress.mockAttempts.length);
-    const average = attempts.length ? attempts.reduce((sum, item) => sum + Number(item.percentage || 0), 0) / attempts.length : null;
-    const best = attempts.length ? Math.max(...attempts.map((item) => Number(item.percentage || 0))) : null;
+    const average = scoredAttempts.length ? scoredAttempts.reduce((sum, item) => sum + Number(item.percentage || 0), 0) / scoredAttempts.length : null;
+    const best = scoredAttempts.length ? Math.max(...scoredAttempts.map((item) => Number(item.percentage || 0))) : null;
     const tried = attempts.reduce((sum, item) => sum + Number(item.attemptedCount || 0), 0);
     els.statAverage.textContent = average === null ? '—' : `${Math.round(average)}%`;
     els.statBest.textContent = best === null ? '—' : `${Math.round(best)}%`;
@@ -951,7 +1091,7 @@
       const key = `${attempt.class}|${attempt.board}|${attempt.subject}|${item.chapter}`;
       if (!chapterMap.has(key)) chapterMap.set(key, { chapter: item.chapter, subject: attempt.subject, class: attempt.class, attempted: 0, correct: 0 });
       const stats = chapterMap.get(key);
-      if (item.attempted) {
+      if (item.attempted && !item.pendingReview) {
         stats.attempted += 1;
         if (item.correct) stats.correct += 1;
       }
@@ -1031,6 +1171,7 @@
   }
 
   function showWelcome() {
+    if (isExamPage) { window.location.assign('index.html'); return; }
     latestResult = null;
     els.resultPanel.classList.add('hidden');
     els.mockCompletePanel.classList.add('hidden');
@@ -1047,7 +1188,9 @@
       if (!session || session.id !== incoming.id) {
         stopTimer();
         session = incoming;
+        if (!isExamPage) { window.location.replace('exam.html'); return; }
         renderActiveSession(false);
+        lockExamNavigation();
       } else if (Number(incoming.updatedAt || 0) > Number(session.updatedAt || 0) && incoming.updatedBy !== TAB_ID) {
         session = incoming;
         if (session.mode === 'mock') renderMockPaper();
@@ -1055,6 +1198,7 @@
         applyActiveLock();
       }
     } else if (session) {
+      if (isExamPage) { window.location.replace('index.html'); return; }
       stopTimer();
       session = null;
       els.sessionPanel.classList.add('hidden');
@@ -1076,9 +1220,13 @@
   els.confirmMockStartBtn.addEventListener('click', startMockSession);
   els.pyqYearSelect.addEventListener('change', updateAvailableCount);
   els.setupForm.addEventListener('submit', startSession);
+  els.fullscreenBtn.addEventListener('click', toggleFullscreen);
+  document.addEventListener('fullscreenchange', updateFullscreenButton);
   els.prevBtn.addEventListener('click', goPrevious);
   els.nextBtn.addEventListener('click', goNext);
   els.markReviewBtn.addEventListener('click', toggleMarked);
+  els.clearResponseBtn.addEventListener('click', clearCurrentResponse);
+  els.markNextBtn.addEventListener('click', markReviewAndNext);
   els.bookmarkBtn.addEventListener('click', toggleBookmark);
   els.finishBtn.addEventListener('click', requestFinish);
   els.exitSessionBtn.addEventListener('click', requestFinish);
@@ -1091,17 +1239,47 @@
   els.howItWorksBtn.addEventListener('click', () => els.howDialog.showModal());
   els.closeDialogBtn.addEventListener('click', () => els.howDialog.close());
   els.gotItBtn.addEventListener('click', () => els.howDialog.close());
+  els.cancelSubmitBtn.addEventListener('click', () => els.submitDialog.close());
+  els.keepTestingBtn.addEventListener('click', () => els.submitDialog.close());
+  els.confirmSubmitBtn.addEventListener('click', () => { els.submitDialog.close(); finishSession(false); });
   window.addEventListener('storage', handleStorageChange);
+  if (isExamPage) window.addEventListener('beforeunload', (event) => { if (readActiveSession()) { event.preventDefault(); event.returnValue = ''; } });
   document.addEventListener('visibilitychange', () => { if (!document.hidden && session?.endsAt) updateTimer(); });
 
+  const savedSession = readActiveSession();
+  if (savedSession && !isExamPage) {
+    window.location.replace('exam.html');
+    return;
+  }
+  if (!savedSession && isExamPage) {
+    window.location.replace('index.html');
+    return;
+  }
   refreshBoardOptions();
+  updateFullscreenButton();
   updateModeVisibility();
   renderDashboard();
-  const savedSession = readActiveSession();
   if (savedSession) {
     session = savedSession;
     renderActiveSession(false);
+    lockExamNavigation();
   } else {
     applyActiveLock();
+  }
+
+  function lockExamNavigation() {
+    if (!isExamPage || !session) return;
+    document.body.classList.add('exam-locked');
+    if (!history.state?.examLocked) {
+      history.replaceState({ examLocked: true }, '', window.location.href);
+      history.pushState({ examLocked: true }, '', window.location.href);
+    }
+    window.addEventListener('popstate', () => {
+      if (readActiveSession()) {
+        history.pushState({ examLocked: true }, '', window.location.href);
+      } else {
+        window.location.replace('index.html');
+      }
+    });
   }
 })();

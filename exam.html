@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#14233b">
+  <meta name="description" content="Vidhyashram BoardPrep Lab — practice, timed tests, previous-year questions and full-paper mock tests.">
+  <title>Vidhyashram · Examination</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="exam-page">
+  <header class="site-header">
+    <a class="brand" href="#top" aria-label="Vidhyashram BoardPrep Lab home">
+      <span class="brand-mark" aria-hidden="true">V</span>
+      <span class="brand-copy"><strong>VIDHYASHRAM</strong><small>BOARDPREP LAB</small></span>
+    </a>
+    <div class="header-right">
+      <span class="privacy-note"><span class="privacy-dot"></span> No login · Progress saved on this device</span>
+      <span class="exam-page-badge"><span></span> TEST IN PROGRESS</span>
+      <button class="button button-quiet button-small" id="howItWorksBtn" type="button">How it works</button>
+    </div>
+  </header>
+
+  <main id="top" class="page-shell">
+    <section class="hero">
+      <div class="hero-copy">
+        <h1 class="academy-title">VIDHYASHRAM</h1>
+        <p class="academy-subtitle">BOARDPREP LAB</p>
+        <p class="hero-subtitle">Practice, previous-year questions and full-paper mock exams for Classes 10 and 12.</p>
+      </div>
+      <div class="hero-stamp" aria-hidden="true"><span>LEARN</span><b>·</b><span>PRACTISE</span><b>·</b><span>IMPROVE</span></div>
+    </section>
+
+    <div class="notice" role="note">
+      <strong>Exam rule:</strong> Answers and explanations remain hidden during every test and appear only after submission. Mock Tests use the exact full paper uploaded by the academy.
+    </div>
+
+    <section class="workspace">
+      <aside class="panel setup-panel" aria-labelledby="setupHeading">
+        <div class="panel-heading">
+          <div><p class="eyebrow">START HERE</p><h2 id="setupHeading">Choose your test</h2></div>
+          <span class="step-chip">VIDHYASHRAM</span>
+        </div>
+        <form id="setupForm">
+          <div class="field mode-field">
+            <label for="modeSelect">Test type</label>
+            <select id="modeSelect">
+              <option value="practice">Practice Test</option>
+              <option value="timed">Timed Test</option>
+              <option value="pyq">PYQ Test</option>
+              <option value="mock">Mock Test</option>
+            </select>
+          </div>
+
+          <div id="questionModeFields">
+            <div class="syllabus-picker">
+              <div class="syllabus-picker-heading">
+                <p class="eyebrow">SELECT YOUR SYLLABUS</p>
+                <strong>Board · Class · Subject · Chapter</strong>
+              </div>
+              <div class="field-row">
+                <div class="field">
+                  <label for="boardSelect">Board</label>
+                  <select id="boardSelect" aria-label="Select board"><option value="">Loading boards…</option></select>
+                </div>
+                <div class="field">
+                  <label for="classSelect">Class</label>
+                  <select id="classSelect" aria-label="Select class">
+                    <option value="10">Class 10</option>
+                    <option value="12">Class 12</option>
+                  </select>
+                </div>
+              </div>
+              <div class="field">
+                <label for="subjectSelect">Subject</label>
+                <select id="subjectSelect" aria-label="Select subject"><option value="">Choose a subject</option></select>
+              </div>
+              <div class="field">
+                <label for="chapterSelect">Chapter / topic</label>
+                <select id="chapterSelect" aria-label="Select chapter"><option value="all">All available chapters</option></select>
+              </div>
+            </div>
+            <div class="field">
+              <label for="difficultySelect">Difficulty</label>
+              <select id="difficultySelect">
+                <option value="all">Mixed (all levels)</option>
+                <option value="Easy">Easy</option>
+                <option value="Moderate">Moderate</option>
+                <option value="Difficult">Difficult</option>
+              </select>
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label for="countSelect">Questions</label>
+                <select id="countSelect">
+                  <option value="5">5</option>
+                  <option value="10" selected>10</option>
+                  <option value="15">15</option>
+                  <option value="20">20</option>
+                  <option value="30">30</option>
+                  <option value="45">45</option>
+                  <option value="60">60</option>
+                  <option value="all">All matching</option>
+                </select>
+              </div>
+              <div class="field hidden" id="pyqYearWrap">
+                <label for="pyqYearSelect">PYQ year</label>
+                <select id="pyqYearSelect"><option value="all">All verified years</option></select>
+              </div>
+            </div>
+            <div id="durationWrap" class="duration-wrap hidden">
+              <label for="durationInput">Time limit (minutes)</label>
+              <input id="durationInput" type="number" min="1" max="240" value="45" inputmode="numeric">
+              <small>Applies to Timed Test and PYQ Test.</small>
+            </div>
+          </div>
+
+          <div id="mockConfigWrap" class="mock-config hidden">
+            <div class="field">
+              <label for="mockCodeInput">Mock paper code</label>
+              <input id="mockCodeInput" type="text" autocomplete="off" autocapitalize="characters" placeholder="e.g. VID10SCI-M01">
+            </div>
+            <p class="mock-code-help">Enter the code shared by Vidhyashram. The exact uploaded paper will open with its own timer.</p>
+            <div class="mock-rule"><strong>Fixed paper only</strong><span>No random questions, no shuffling and no automatic checking.</span></div>
+            <div id="mockPreviewCard" class="mock-preview hidden">
+              <p class="eyebrow">PAPER FOUND</p>
+              <h3 id="mockPreviewTitle">Mock paper title</h3>
+              <p id="mockPreviewMeta" class="mock-preview-meta"></p>
+              <div class="mock-preview-actions">
+                <a id="mockPreviewOpenLink" class="button button-outline" href="#" target="_blank" rel="noopener">Open / print PDF</a>
+                <a id="mockPreviewDownloadLink" class="button button-outline" href="#" download>Download PDF ↓</a>
+              </div>
+              <button class="button button-primary button-full" id="confirmMockStartBtn" type="button">Start timer and open test →</button>
+              <small>The timer starts only when you press the button above.</small>
+            </div>
+          </div>
+
+          <div class="available-line"><span id="availableCount">Choose a subject to see available questions</span><span class="dot-separator">•</span><span id="bankLabel">Vidhyashram bank</span></div>
+          <p id="formMessage" class="form-message" aria-live="polite"></p>
+          <button class="button button-primary button-full" id="startBtn" type="submit">Start selected test <span aria-hidden="true">→</span></button>
+        </form>
+        <div class="setup-footnote"><span class="tiny-lock">▣</span> One active test at a time. Refreshing the page will resume it.</div>
+        <div id="activeLockNotice" class="active-lock-notice hidden" role="status">An active test is already in progress. Submit it before starting another test.</div>
+        <div class="revision-actions">
+          <p class="eyebrow">QUICK REVISION</p>
+          <button class="button button-outline button-full" id="savedRevisionBtn" type="button">Practise saved questions <span id="savedCount">0</span></button>
+          <button class="button button-outline button-full" id="mistakeRevisionBtn" type="button">Retry mistakes <span id="mistakeCount">0</span></button>
+        </div>
+      </aside>
+
+      <section class="main-column">
+        <section id="welcomePanel" class="panel welcome-panel">
+          <div class="welcome-art" aria-hidden="true"><div class="paper paper-back"></div><div class="paper paper-front"><i></i><i></i><i></i><b>✓</b></div><span class="spark spark-one">✳</span><span class="spark spark-two">✦</span></div>
+          <div class="welcome-copy">
+            <p class="eyebrow">A SMARTER WAY TO PREPARE</p>
+            <h2>Your next strong performance<br>starts with one good session.</h2>
+            <p>Choose a practice mode, revise verified previous-year questions or enter a mock code for the complete academy paper. Your answers stay private until you submit.</p>
+            <div class="feature-pills"><span>4 test types</span><span>Dedicated exam screen</span><span>Answers after submission</span></div>
+            <div class="exam-flow-strip">
+              <div><b>01 · SET UP</b><span>Choose board, class, subject, chapter and question count.</span></div>
+              <div><b>02 · EXAM HALL</b><span>Attempt on a separate screen with timer and question palette.</span></div>
+              <div><b>03 · SUBMIT</b><span>Review scored answers and responses awaiting teacher checking.</span></div>
+            </div>
+          </div>
+        </section>
+
+        <section id="sessionPanel" class="panel session-panel hidden" aria-labelledby="sessionTitle">
+          <div class="session-topline">
+            <div><p class="eyebrow" id="sessionMeta">PRACTICE TEST</p><h2 id="sessionTitle">Your test</h2><small class="exam-subtitle">Use the question palette to move between questions. Responses save automatically.</small></div>
+            <div class="exam-topline-actions"><button class="button button-outline exam-fullscreen-btn" id="fullscreenBtn" type="button">Enter full screen</button><div class="timer-box hidden" id="timerBox"><span class="timer-label">TIME LEFT</span><strong id="timerText">45:00</strong></div></div>
+          </div>
+          <div id="testProgressArea">
+            <div class="session-progress-row"><span id="questionCounter">Question 1 of 10</span><span id="answeredCounter">0 answered</span></div>
+            <div class="progress-track"><div id="progressFill" class="progress-fill"></div></div>
+            <div class="navigator-heading"><span>Question palette</span><small>Select a question number to visit it</small></div>
+            <div id="questionNavigator" class="question-navigator" aria-label="Question palette"></div>
+            <div class="palette-legend" aria-label="Question status legend">
+              <span><i class="legend-dot state-not-visited"></i>Not visited</span>
+              <span><i class="legend-dot state-not-answered"></i>Not answered</span>
+              <span><i class="legend-dot state-answered"></i>Answered</span>
+              <span><i class="legend-dot state-marked"></i>Marked for review</span>
+              <span><i class="legend-dot state-answered-marked"></i>Answered &amp; marked</span>
+            </div>
+          </div>
+          <div class="question-area" id="questionArea"></div>
+          <div class="question-nav" id="questionNav">
+            <button class="button button-quiet" id="prevBtn" type="button">← Previous</button>
+            <div class="nav-right">
+              <button class="button button-outline" id="clearResponseBtn" type="button">Clear response</button>
+              <button class="button button-outline" id="markReviewBtn" type="button">Mark for review</button>
+              <button class="button button-outline" id="markNextBtn" type="button">Mark &amp; Next</button>
+              <button class="button button-outline" id="bookmarkBtn" type="button">☆ Save question</button>
+              <button class="button button-primary" id="nextBtn" type="button">Save &amp; Next →</button>
+              <button class="button button-primary" id="finishBtn" type="button">Submit test</button>
+            </div>
+          </div>
+          <div class="session-bottom"><span id="sessionHint">Answers and explanations are hidden until submission.</span><button class="text-button" id="exitSessionBtn" type="button">Submit & end session</button></div>
+        </section>
+
+        <section id="resultPanel" class="panel result-panel hidden" aria-labelledby="resultHeading">
+          <div class="result-heading-row"><div><p class="eyebrow">SESSION COMPLETE</p><h2 id="resultHeading">Here's how you did</h2></div><span class="result-check">✓</span></div>
+          <div class="score-grid">
+            <div class="score-card score-main"><span>YOUR SCORE</span><strong id="resultScore">0/0</strong><small id="resultPercent">0%</small></div>
+            <div class="score-card"><span>ACCURACY</span><strong id="resultAccuracy">0%</strong><small id="resultAttempted">0 attempted</small></div>
+            <div class="score-card"><span>CORRECT</span><strong id="resultCorrect">0</strong><small id="resultWrong">0 incorrect</small></div>
+          </div>
+          <div class="result-insight" id="resultInsight"></div>
+          <div class="result-actions"><button class="button button-primary" id="tryAgainBtn" type="button">Back to test setup</button><button class="button button-outline" id="downloadResultBtn" type="button">Download JPG report ↓</button></div>
+          <div class="chapter-result-block"><div class="review-heading"><h3>Chapter-wise result</h3><span>After submission</span></div><div id="resultChapterBreakdown" class="chapter-breakdown"></div></div>
+          <div class="review-heading"><h3>Review your answers</h3><span id="reviewCount">0 questions</span></div>
+          <div id="reviewList" class="review-list"></div>
+        </section>
+
+        <section id="mockCompletePanel" class="panel mock-complete-panel hidden" aria-labelledby="mockCompleteHeading">
+          <div class="result-heading-row"><div><p class="eyebrow">MOCK TEST ENDED</p><h2 id="mockCompleteHeading">Your paper is complete.</h2></div><span class="result-check">✓</span></div>
+          <div class="mock-complete-details" id="mockCompleteDetails"></div>
+          <p class="result-insight">This mock is not automatically graded. Submit your handwritten answer sheet to your Vidhyashram teacher for offline evaluation.</p>
+          <button class="button button-primary" id="mockBackBtn" type="button">Back to test selection</button>
+        </section>
+
+        <section class="panel dashboard-panel" aria-labelledby="dashboardHeading">
+          <div class="panel-heading dashboard-heading"><div><p class="eyebrow">YOUR LEARNING RECORD</p><h2 id="dashboardHeading">Progress on this device</h2></div><button class="text-button" id="resetProgressBtn" type="button">Reset history</button></div>
+          <div class="stats-grid">
+            <div class="stat-card"><span>TESTS COMPLETED</span><strong id="statAttempts">0</strong></div>
+            <div class="stat-card"><span>AVERAGE SCORE</span><strong id="statAverage">—</strong></div>
+            <div class="stat-card"><span>BEST SCORE</span><strong id="statBest">—</strong></div>
+            <div class="stat-card"><span>QUESTIONS TRIED</span><strong id="statTried">0</strong></div>
+          </div>
+          <div class="dashboard-lower">
+            <div class="topic-box"><h3>Chapter-wise performance</h3><div id="chapterPerformance" class="empty-state">Complete a few tests to see chapter-level performance.</div></div>
+            <div class="recent-box"><h3>Recent sessions</h3><div id="recentSessions" class="empty-state">Your completed sessions will appear here.</div></div>
+          </div>
+          <p class="storage-note">Progress, saved questions and active sessions are stored in this browser on this device. They do not sync across devices.</p>
+        </section>
+      </section>
+    </section>
+
+    <footer class="site-footer"><span><strong>VIDHYASHRAM</strong> <span class="footer-sep">·</span> BoardPrep Lab</span><span>Learn well. Practise honestly. Improve every day.</span></footer>
+  </main>
+
+  <dialog id="submitDialog" class="how-dialog submit-dialog">
+    <div class="dialog-head"><div><p class="eyebrow">END OF TEST</p><h2>Submit your test?</h2></div><button class="icon-button" id="cancelSubmitBtn" aria-label="Cancel submission" type="button">×</button></div>
+    <p class="submit-dialog-intro">Review your response status before you submit. You will not be able to change answers afterwards.</p>
+    <div class="submit-summary" id="submitSummary"></div>
+    <div class="submit-dialog-actions"><button class="button button-outline" id="keepTestingBtn" type="button">Continue test</button><button class="button button-primary" id="confirmSubmitBtn" type="button">Submit test</button></div>
+  </dialog>
+
+  <dialog id="howDialog" class="how-dialog">
+    <div class="dialog-head"><div><p class="eyebrow">QUICK GUIDE</p><h2>How Vidhyashram BoardPrep Lab works</h2></div><button class="icon-button" id="closeDialogBtn" aria-label="Close" type="button">×</button></div>
+    <ol class="guide-list">
+      <li><b>Practice Test</b><span>Build a question set from the available bank. Work at your own pace.</span></li>
+      <li><b>Timed Test</b><span>Attempt a question set against a countdown timer.</span></li>
+      <li><b>PYQ Test</b><span>Choose a verified exam year. The year and paper/set details appear with each question.</span></li>
+      <li><b>Mock Test</b><span>Enter the code given by the academy. The complete fixed paper opens on screen, with print and download options. The timer is set for that paper.</span></li>
+      <li><b>Submit to see answers</b><span>No correct answers or explanations are shown during any test. They appear only after submission. Mock Tests are checked offline by the teacher.</span></li>
+    </ol>
+    <p class="dialog-warning">An unfinished test is saved on this device and will resume after refresh. Only one active test can run in this browser at a time. This static practice site is not a high-stakes secure exam system.</p>
+    <button class="button button-primary button-full" id="gotItBtn" type="button">Got it</button>
+  </dialog>
+
+  <script src="questions.js"></script>
+  <script src="source-questions.js"></script>
+  <script src="mock-papers.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

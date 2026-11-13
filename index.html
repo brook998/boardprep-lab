@@ -19,6 +19,7 @@
     </a>
     <div class="header-right">
       <span class="privacy-note"><span class="privacy-dot"></span> No login · Progress saved on this device</span>
+      <span class="exam-page-badge"><span></span> TEST IN PROGRESS</span>
       <button class="button button-quiet button-small" id="howItWorksBtn" type="button">How it works</button>
     </div>
   </header>
@@ -99,6 +100,9 @@
                   <option value="10" selected>10</option>
                   <option value="15">15</option>
                   <option value="20">20</option>
+                  <option value="30">30</option>
+                  <option value="45">45</option>
+                  <option value="60">60</option>
                   <option value="all">All matching</option>
                 </select>
               </div>
@@ -154,28 +158,42 @@
             <p class="eyebrow">A SMARTER WAY TO PREPARE</p>
             <h2>Your next strong performance<br>starts with one good session.</h2>
             <p>Choose a practice mode, revise verified previous-year questions or enter a mock code for the complete academy paper. Your answers stay private until you submit.</p>
-            <div class="feature-pills"><span>4 test types</span><span>Resume any session</span><span>Post-test explanations</span></div>
+            <div class="feature-pills"><span>4 test types</span><span>Dedicated exam screen</span><span>Answers after submission</span></div>
+            <div class="exam-flow-strip">
+              <div><b>01 · SET UP</b><span>Choose board, class, subject, chapter and question count.</span></div>
+              <div><b>02 · EXAM HALL</b><span>Attempt on a separate screen with timer and question palette.</span></div>
+              <div><b>03 · SUBMIT</b><span>Review scored answers and responses awaiting teacher checking.</span></div>
+            </div>
           </div>
         </section>
 
         <section id="sessionPanel" class="panel session-panel hidden" aria-labelledby="sessionTitle">
           <div class="session-topline">
-            <div><p class="eyebrow" id="sessionMeta">PRACTICE TEST</p><h2 id="sessionTitle">Your test</h2></div>
-            <div class="timer-box hidden" id="timerBox"><span class="timer-label">TIME LEFT</span><strong id="timerText">45:00</strong></div>
+            <div><p class="eyebrow" id="sessionMeta">PRACTICE TEST</p><h2 id="sessionTitle">Your test</h2><small class="exam-subtitle">Use the question palette to move between questions. Responses save automatically.</small></div>
+            <div class="exam-topline-actions"><button class="button button-outline exam-fullscreen-btn" id="fullscreenBtn" type="button">Enter full screen</button><div class="timer-box hidden" id="timerBox"><span class="timer-label">TIME LEFT</span><strong id="timerText">45:00</strong></div></div>
           </div>
           <div id="testProgressArea">
             <div class="session-progress-row"><span id="questionCounter">Question 1 of 10</span><span id="answeredCounter">0 answered</span></div>
             <div class="progress-track"><div id="progressFill" class="progress-fill"></div></div>
-            <div class="navigator-heading"><span>Question navigator</span><small>Tap a number to move</small></div>
-            <div id="questionNavigator" class="question-navigator" aria-label="Question navigator"></div>
+            <div class="navigator-heading"><span>Question palette</span><small>Select a question number to visit it</small></div>
+            <div id="questionNavigator" class="question-navigator" aria-label="Question palette"></div>
+            <div class="palette-legend" aria-label="Question status legend">
+              <span><i class="legend-dot state-not-visited"></i>Not visited</span>
+              <span><i class="legend-dot state-not-answered"></i>Not answered</span>
+              <span><i class="legend-dot state-answered"></i>Answered</span>
+              <span><i class="legend-dot state-marked"></i>Marked for review</span>
+              <span><i class="legend-dot state-answered-marked"></i>Answered &amp; marked</span>
+            </div>
           </div>
           <div class="question-area" id="questionArea"></div>
           <div class="question-nav" id="questionNav">
             <button class="button button-quiet" id="prevBtn" type="button">← Previous</button>
             <div class="nav-right">
+              <button class="button button-outline" id="clearResponseBtn" type="button">Clear response</button>
               <button class="button button-outline" id="markReviewBtn" type="button">Mark for review</button>
+              <button class="button button-outline" id="markNextBtn" type="button">Mark &amp; Next</button>
               <button class="button button-outline" id="bookmarkBtn" type="button">☆ Save question</button>
-              <button class="button button-primary" id="nextBtn" type="button">Next →</button>
+              <button class="button button-primary" id="nextBtn" type="button">Save &amp; Next →</button>
               <button class="button button-primary" id="finishBtn" type="button">Submit test</button>
             </div>
           </div>
@@ -190,7 +208,7 @@
             <div class="score-card"><span>CORRECT</span><strong id="resultCorrect">0</strong><small id="resultWrong">0 incorrect</small></div>
           </div>
           <div class="result-insight" id="resultInsight"></div>
-          <div class="result-actions"><button class="button button-primary" id="tryAgainBtn" type="button">Build another test</button><button class="button button-outline" id="downloadResultBtn" type="button">Download JPG report ↓</button></div>
+          <div class="result-actions"><button class="button button-primary" id="tryAgainBtn" type="button">Back to test setup</button><button class="button button-outline" id="downloadResultBtn" type="button">Download JPG report ↓</button></div>
           <div class="chapter-result-block"><div class="review-heading"><h3>Chapter-wise result</h3><span>After submission</span></div><div id="resultChapterBreakdown" class="chapter-breakdown"></div></div>
           <div class="review-heading"><h3>Review your answers</h3><span id="reviewCount">0 questions</span></div>
           <div id="reviewList" class="review-list"></div>
@@ -223,6 +241,13 @@
     <footer class="site-footer"><span><strong>VIDHYASHRAM</strong> <span class="footer-sep">·</span> BoardPrep Lab</span><span>Learn well. Practise honestly. Improve every day.</span></footer>
   </main>
 
+  <dialog id="submitDialog" class="how-dialog submit-dialog">
+    <div class="dialog-head"><div><p class="eyebrow">END OF TEST</p><h2>Submit your test?</h2></div><button class="icon-button" id="cancelSubmitBtn" aria-label="Cancel submission" type="button">×</button></div>
+    <p class="submit-dialog-intro">Review your response status before you submit. You will not be able to change answers afterwards.</p>
+    <div class="submit-summary" id="submitSummary"></div>
+    <div class="submit-dialog-actions"><button class="button button-outline" id="keepTestingBtn" type="button">Continue test</button><button class="button button-primary" id="confirmSubmitBtn" type="button">Submit test</button></div>
+  </dialog>
+
   <dialog id="howDialog" class="how-dialog">
     <div class="dialog-head"><div><p class="eyebrow">QUICK GUIDE</p><h2>How Vidhyashram BoardPrep Lab works</h2></div><button class="icon-button" id="closeDialogBtn" aria-label="Close" type="button">×</button></div>
     <ol class="guide-list">
@@ -237,6 +262,7 @@
   </dialog>
 
   <script src="questions.js"></script>
+  <script src="source-questions.js"></script>
   <script src="mock-papers.js"></script>
   <script src="app.js"></script>
 </body>
