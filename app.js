@@ -5,7 +5,7 @@
   const mockPapers = Array.isArray(window.MOCK_PAPERS) ? window.MOCK_PAPERS : [];
   const STORAGE_KEY = 'vidhyashram-boardprep-progress-v2';
   const LEGACY_STORAGE_KEY = 'boardprep-lab-progress-v1';
-  const ACTIVE_KEY = 'vidhyashram-boardprep-active-v2';
+  const ACTIVE_KEY = 'vidhyashram-boardprep-active-v3';
   const TAB_ID = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
   const $ = (id) => document.getElementById(id);
   const isExamPage = document.body.classList.contains('exam-page');
@@ -122,13 +122,25 @@
     select.value = values.map(String).includes(previous) ? previous : firstValue;
   }
 
+  function isRegularEligibleQuestion(q) {
+    // Standard Practice, Timed and PYQ tests contain only gradable MCQs and numericals.
+    // Descriptive/written and fill-in-the-blank questions are excluded; manual review is for Mock Tests only.
+    const allowed = ['mcq', 'source-mcq', 'numeric'].includes(q.type);
+    const keyedSource = q.type !== 'source-mcq' || (q.gradingStatus === 'verified' && /^[ABCD]$/.test(String(q.answerKeyLetter || '')));
+    const keyedNumeric = q.type !== 'numeric' || Number.isFinite(Number(q.answer));
+    const keyedMcq = q.type !== 'mcq' || (q.answer !== undefined && q.answer !== null && String(q.answer).trim() !== '');
+    return allowed && keyedSource && keyedNumeric && keyedMcq;
+  }
+
   function currentScopeQuestions() {
     const cls = els.classSelect.value;
     const board = els.boardSelect.value;
     const subject = els.subjectSelect.value;
     const chapter = els.chapterSelect.value;
     const difficulty = els.difficultySelect.value;
-    return bank.filter((q) => q.class === cls && q.board === board && q.subject === subject &&
+    // Ordinary Practice, Timed and PYQ tests contain only automatically gradable MCQs and numericals.
+    // Descriptive/written and fill-in-the-blank items are reserved out of the regular test flow.
+    return bank.filter((q) => isRegularEligibleQuestion(q) && q.class === cls && q.board === board && q.subject === subject &&
       (chapter === 'all' || q.chapter === chapter) &&
       (difficulty === 'all' || q.difficulty === difficulty));
   }
@@ -140,7 +152,7 @@
 
   function refreshBoardOptions() {
     const cls = els.classSelect.value;
-    const boards = uniqueSorted(bank.filter((q) => q.class === cls).map((q) => q.board));
+    const boards = uniqueSorted(bank.filter((q) => isRegularEligibleQuestion(q) && q.class === cls).map((q) => q.board));
     const previous = els.boardSelect.value;
     setSelectOptions(els.boardSelect, boards, 'Choose a board', '');
     els.boardSelect.value = boards.includes(previous) ? previous : (boards[0] || '');
@@ -150,7 +162,7 @@
   function refreshSubjectOptions() {
     const cls = els.classSelect.value;
     const board = els.boardSelect.value;
-    const subjects = uniqueSorted(bank.filter((q) => q.class === cls && q.board === board).map((q) => q.subject));
+    const subjects = uniqueSorted(bank.filter((q) => isRegularEligibleQuestion(q) && q.class === cls && q.board === board).map((q) => q.subject));
     const previous = els.subjectSelect.value;
     setSelectOptions(els.subjectSelect, subjects, 'Choose a subject', '');
     const preferred = cls === '10' && board === 'CBSE' ? 'Science' : (cls === '12' && board === 'CBSE' ? 'Physics' : '');
@@ -162,7 +174,7 @@
     const cls = els.classSelect.value;
     const board = els.boardSelect.value;
     const subject = els.subjectSelect.value;
-    const chapters = uniqueSorted(bank.filter((q) => q.class === cls && q.board === board && q.subject === subject).map((q) => q.chapter));
+    const chapters = uniqueSorted(bank.filter((q) => isRegularEligibleQuestion(q) && q.class === cls && q.board === board && q.subject === subject).map((q) => q.chapter));
     const previous = els.chapterSelect.value;
     setSelectOptions(els.chapterSelect, chapters, 'All available chapters', 'all');
     if (chapters.includes(previous)) els.chapterSelect.value = previous;
@@ -562,44 +574,56 @@
 
   const pyqImageBundlePromises = {};
 
-  function loadPyqImageBundle(classLevel) {
-    const level = String(classLevel || '10') === '12' ? '12' : '10';
-    if (pyqImageBundlePromises[level]) return pyqImageBundlePromises[level];
-    pyqImageBundlePromises[level] = new Promise((resolve) => {
+  function loadPyqImageBundle(question) {
+    const cls = String(question?.class || '10');
+    const year = Number(question?.year || 0);
+    const bundle = cls === '12' ? 'pyq-images-class12.js' : `pyq-images-class10-${year}.js`;
+    if (pyqImageBundlePromises[bundle]) return pyqImageBundlePromises[bundle];
+    pyqImageBundlePromises[bundle] = new Promise((resolve) => {
       const script = document.createElement('script');
-      script.src = new URL(`pyq-images-class${level}.js?v=20261114-2`, document.baseURI).href;
+      script.src = new URL(bundle, document.baseURI).href;
       script.async = true;
       script.onload = () => resolve(true);
       script.onerror = () => resolve(false);
       document.head.append(script);
     });
-    return pyqImageBundlePromises[level];
+    return pyqImageBundlePromises[bundle];
   }
 
   function renderSourceImage(question) {
-    if (!question.sourceImage) return;
+    const filenames = (question.sourceImages && question.sourceImages.length
+      ? question.sourceImages : (question.sourceImage ? [question.sourceImage] : []))
+      .map((name) => String(name).split('/').pop());
+    if (!filenames.length) return;
     const details = makeElement('details', 'source-image-details');
-    const summary = makeElement('summary', '', 'Original paper question image');
     details.open = true;
-    const image = document.createElement('img');
-    image.alt = `Original ${question.subject || ''} question ${question.questionNumber || ''} from paper ${question.paperCode || ''}`;
-    image.loading = 'lazy';
-    image.decoding = 'async';
-    const filename = String(question.sourceImage).split('/').pop();
-    const fallback = makeElement('p', 'source-image-fallback', 'The original image could not be loaded. Open “Text transcription” below to read the question.');
-    image.addEventListener('error', () => {
-      if (image.isConnected) image.remove();
-      if (!fallback.isConnected) details.append(fallback);
-      const textDetails = els.questionArea.querySelector('.source-text-details');
-      if (textDetails) textDetails.open = true;
-    });
-    details.append(summary, image);
+    const summary = makeElement('summary', '', 'Original English paper page(s) · full page, not cropped');
+    details.append(summary);
+    const holder = makeElement('div', 'source-image-pages');
+    details.append(holder);
+    const fallback = makeElement('p', 'source-image-fallback', 'The original paper page is unavailable. The question text and options above remain available.');
     els.questionArea.append(details);
-    loadPyqImageBundle(question.class).then((loaded) => {
-      const bundled = window.PYQ_IMAGE_DATA && window.PYQ_IMAGE_DATA[filename];
-      if (bundled) image.src = bundled;
-      else if (loaded) image.src = question.sourceImage;
-      else image.src = question.sourceImage;
+    loadPyqImageBundle(question).then((loaded) => {
+      const data = window.PYQ_IMAGE_DATA || {};
+      let shown = 0;
+      filenames.forEach((filename, index) => {
+        const src = data[filename];
+        if (!src) return;
+        const figure = makeElement('figure', 'source-image-page');
+        const caption = makeElement('figcaption', '', `Full page reference ${index + 1}`);
+        const image = document.createElement('img');
+        image.alt = `Uncropped original CBSE ${question.year || ''} Science paper page for question ${question.questionNumber || ''}`;
+        image.loading = 'lazy';
+        image.decoding = 'async';
+        image.src = src;
+        image.addEventListener('error', () => figure.remove());
+        figure.append(caption, image);
+        holder.append(figure);
+        shown += 1;
+      });
+      if (!shown || !loaded) {
+        if (!fallback.isConnected) details.append(fallback);
+      }
     });
   }
 
@@ -638,22 +662,15 @@
       const sourceLine = makeElement('p', 'source-question-meta', `Original paper ${question.paperCode || question.sourcePaper || 'code not listed'} · Question ${question.questionNumber || '—'} · ${question.year || 'Year unverified'}`);
       els.questionArea.append(sourceLine);
     }
-    if (question.sourceImage) {
-      renderSourceImage(question);
-      const textDetails = makeElement('details', 'source-text-details');
-      const textSummary = makeElement('summary', '', 'Text transcription (tap to expand)');
-      const compactPrompt = String(question.prompt || '').replace(/\s+/g, ' ').trim();
-      textDetails.append(textSummary, makeElement('p', 'question-prompt source-question-transcription', compactPrompt));
-      els.questionArea.append(textDetails);
-    } else {
-      els.questionArea.append(makeElement('h3', 'question-prompt', question.prompt));
-    }
+    els.questionArea.append(makeElement('h3', 'question-prompt', String(question.prompt || '').replace(/\s+/g, ' ').trim()));
+    if (question.sourceImage || question.sourceImages?.length) renderSourceImage(question);
 
     if (question.type === 'mcq' || question.type === 'source-mcq') {
       const options = makeElement('div', 'question-options');
-      const choiceValues = question.type === 'source-mcq' ? ['A', 'B', 'C', 'D'] : (question.options || []);
+      const sourceLetters = ['A', 'B', 'C', 'D'];
+      const choiceValues = question.type === 'source-mcq' ? sourceLetters : (question.options || []);
       choiceValues.forEach((option, index) => {
-        const value = String(option);
+        const value = question.type === 'source-mcq' ? sourceLetters[index] : String(option);
         const label = makeElement('label', 'option-label');
         if (session.answers[question.id] === value) label.classList.add('selected');
         const radio = document.createElement('input');
@@ -669,17 +686,15 @@
           els.clearResponseBtn.disabled = false;
           updateAnsweredCounter();
         });
-        const labelText = question.type === 'source-mcq' ? `Option ${value}` : `${String.fromCharCode(65 + index)}. ${option}`;
+        const optionText = question.type === 'source-mcq' ? (question.options?.[index] || '') : option;
+        const placeholder = /^Option [A-D]$/i.test(String(optionText).trim());
+        const labelText = question.type === 'source-mcq'
+          ? (optionText && !placeholder ? `${value}. ${optionText}` : `Option ${value}`)
+          : `${String.fromCharCode(65 + index)}. ${option}`;
         label.append(radio, makeElement('span', '', labelText));
         options.append(label);
       });
       els.questionArea.append(options);
-      if (question.type === 'source-mcq') {
-        const hint = question.gradingStatus === 'verified'
-          ? 'Select A, B, C or D. This answer has been verified and will be checked automatically when you submit.'
-          : 'Select A, B, C or D. This question is not included in your score yet because its answer key has not been verified.';
-        els.questionArea.append(makeElement('p', 'input-hint', hint));
-      }
     } else if (question.type === 'written') {
       const wrap = makeElement('div', 'answer-input-wrap written-answer-wrap');
       const input = document.createElement('textarea');
@@ -694,7 +709,7 @@
         els.clearResponseBtn.disabled = !questionIsAnswered(question);
         updateAnsweredCounter();
       });
-      wrap.append(input, makeElement('p', 'input-hint', 'Written response · Saved automatically · To be checked by the teacher, not auto-marked.'));
+      wrap.append(input, makeElement('p', 'input-hint', 'Written responses are not included in standard Practice, Timed or PYQ tests.'));
       els.questionArea.append(wrap);
     } else {
       const wrap = makeElement('div', 'answer-input-wrap');
@@ -725,12 +740,14 @@
   }
 
   function parseNumeric(value) {
-    const cleaned = String(value ?? '').trim().replace(/[−–]/g, '-').replace(/,/g, '').replace(/\s+/g, '');
+    const cleaned = String(value ?? '').trim().replace(/[−–⁻]/g, '-').replace(/[⁺]/g, '+').replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹]/g, (digit) => '0123456789'['⁰¹²³⁴⁵⁶⁷⁸⁹'.indexOf(digit)]).replace(/,/g, '').replace(/\s+/g, '');
     const fraction = cleaned.match(/^([+-]?\d+(?:\.\d+)?)\/([+-]?\d+(?:\.\d+)?)$/);
     if (fraction) {
       const denominator = Number(fraction[2]);
       return denominator === 0 ? NaN : Number(fraction[1]) / denominator;
     }
+    const powerForm = cleaned.match(/^([+-]?(?:\d+\.?\d*|\.\d+))(?:×|x|\*)10\^?([+-]?\d+)/i);
+    if (powerForm) return Number(powerForm[1]) * Math.pow(10, Number(powerForm[2]));
     const match = cleaned.match(/[+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?/i);
     return match ? Number(match[0]) : NaN;
   }
@@ -738,7 +755,7 @@
   function isCorrect(question, response) {
     if (String(response ?? '').trim() === '' || question.type === 'written' || question.gradingStatus === 'pending-review') return false;
     if (question.type === 'source-mcq') {
-      return question.gradingStatus === 'verified' && /^[ABCD]$/.test(String(question.answerKeyLetter || ''))
+      return /^[ABCD]$/.test(String(question.answerKeyLetter || ''))
         && normaliseText(response) === normaliseText(question.answerKeyLetter);
     }
     if (question.type === 'mcq') return normaliseText(response) === normaliseText(question.answer);
@@ -753,12 +770,13 @@
   }
 
   function correctAnswerText(question) {
-    if (question.type === 'source-mcq') return question.gradingStatus === 'verified' && question.answerKeyLetter
-      ? `Verified correct option: ${question.answerKeyLetter}`
-      : 'Answer key not yet verified — this question is not included in the score';
-    if (question.type === 'written') return 'Written response — teacher evaluation required';
+    if (question.type === 'source-mcq') {
+      const letter = question.answerKeyLetter || '';
+      const optionText = question.options?.['ABCD'.indexOf(letter)];
+      return letter ? `Option ${letter}${optionText ? ` · ${optionText}` : ''}` : 'Answer key unavailable';
+    }
     if (question.type === 'blank') return (question.accepted || [question.answer]).join(' / ');
-    if (question.type === 'numeric') return `${question.answer}${question.unit ? ` ${question.unit}` : ''}`;
+    if (question.type === 'numeric') return question.answerDisplay || `${question.answer}${question.unit ? ` ${question.unit}` : ''}`;
     return String(question.answer ?? 'Not supplied');
   }
 
@@ -825,16 +843,12 @@
     const unanswered = session.questions.length - answered;
     const marked = session.questions.filter((question) => session.marked?.[question.id]).length;
     const notVisited = session.questions.filter((question, index) => !session.visited?.[question.id] && index !== session.index).length;
-    const pending = session.questions.filter((question) => question.type === 'written').length;
-    const unverified = session.questions.filter((question) => question.type === 'source-mcq' && question.gradingStatus !== 'verified').length;
     els.submitSummary.replaceChildren();
     [
       ['Answered', answered],
       ['Not answered', unanswered],
       ['Marked for review', marked],
-      ['Not visited', notVisited],
-      ['Descriptive answers for teacher checking', pending],
-      ['Objective questions not yet scored', unverified]
+      ['Not visited', notVisited]
     ].forEach(([label, value]) => {
       const row = makeElement('div', 'submit-summary-row');
       row.append(makeElement('span', '', label), makeElement('strong', '', String(value)));
@@ -856,9 +870,9 @@
     const outcomes = completedSession.questions.map((question) => {
       const response = completedSession.answers[question.id] ?? '';
       const attempted = String(response).trim() !== '';
-      const pendingReview = question.type === 'written';
-      const needsVerification = question.type === 'source-mcq' && question.gradingStatus !== 'verified';
-      const gradable = !pendingReview && !needsVerification && question.gradingStatus !== 'pending-review';
+      const pendingReview = false;
+      const needsVerification = false;
+      const gradable = true;
       const correct = gradable && attempted && isCorrect(question, response);
       return {
         id: question.id,
@@ -969,17 +983,12 @@
     els.resultScore.textContent = result.maxMarks ? `${formatNumber(result.score)}/${formatNumber(result.maxMarks)}` : 'Pending';
     els.resultPercent.textContent = result.maxMarks ? `${Math.round(result.percentage)}% of auto-graded marks` : 'No automatic score for this set';
     els.resultAccuracy.textContent = result.gradableAttemptedCount ? `${Math.round(result.accuracy)}%` : '—';
-    els.resultAttempted.textContent = `${result.attemptedCount} attempted · ${result.pendingReviewCount || 0} written for teacher`;
+    els.resultAttempted.textContent = `${result.attemptedCount} attempted`;
     els.resultCorrect.textContent = String(result.correctCount);
     els.resultWrong.textContent = `${result.wrongCount} wrong · ${result.totalQuestions - result.attemptedCount} skipped`;
     els.reviewCount.textContent = `${result.totalQuestions} questions`;
     let insight = '';
-    if (result.pendingReviewCount || result.unverifiedCount) {
-      const parts = [];
-      if (result.pendingReviewCount) parts.push(`${result.pendingReviewCount} descriptive answer(s) are saved for teacher checking`);
-      if (result.unverifiedCount) parts.push(`${result.unverifiedCount} objective answer(s) were excluded because their keys are not yet verified`);
-      insight = `${parts.join('; ')}.`;
-    } else if (result.attemptedCount === 0) insight = 'No answers were attempted in this session. Review the answers below and try a shorter set.';
+    if (result.attemptedCount === 0) insight = 'No answers were attempted in this session. Review the answers below and try a shorter set.';
     else if (result.accuracy >= 85) insight = 'Strong work. Review the questions you missed so that small gaps do not become repeated mistakes.';
     else if (result.accuracy >= 60) insight = 'A useful practice run. Revisit the incorrect answers and try another set from the same topics.';
     else insight = 'Treat this as a diagnostic, not a judgement. Start with the explanations, revise the listed topics and practise them again.';
@@ -991,22 +1000,14 @@
       const card = makeElement('article', 'review-item');
       const head = makeElement('div', 'review-item-head');
       head.append(makeElement('b', '', `Q${index + 1} · ${item.chapter}${item.year ? ` · PYQ ${item.year}` : ''}${item.set ? ` · ${item.set}` : ''}`));
-      const manualItem = Boolean(item.pendingReview);
-      const unverifiedItem = Boolean(item.needsVerification);
-      let statusClass = (manualItem || unverifiedItem) ? 'pending' : (item.correct ? 'good' : 'bad');
-      let statusText = manualItem ? (item.attempted ? 'Pending teacher check' : 'Written answer · teacher check')
-        : unverifiedItem ? 'Not scored · answer key not verified'
-        : (item.correct ? `✓ Correct · ${item.marks} mark(s)` : (item.attempted ? '✕ Incorrect' : '— Not attempted'));
+      const statusClass = item.correct ? 'good' : 'bad';
+      const statusText = item.correct ? `✓ Correct · ${item.marks} mark(s)` : (item.attempted ? '✕ Incorrect' : '— Not attempted');
       head.append(makeElement('span', `review-status ${statusClass}`, statusText));
       card.append(head);
       card.append(makeElement('p', 'review-prompt', item.prompt));
       card.append(makeElement('p', 'review-answer', `Your answer: ${item.attempted ? item.response : 'Not answered'}`));
-      if (manualItem || unverifiedItem) {
-        card.append(makeElement('p', 'review-answer source-key-note', item.answer));
-      } else {
-        card.append(makeElement('p', 'review-answer correct-answer', `Correct answer: ${item.answer}`));
-        if (item.explanation) card.append(makeElement('p', 'review-explanation', item.explanation));
-      }
+      card.append(makeElement('p', 'review-answer correct-answer', `Correct answer: ${item.answer}`));
+      if (item.explanation) card.append(makeElement('p', 'review-explanation', item.explanation));
       els.reviewList.append(card);
     });
   }
@@ -1209,7 +1210,7 @@
   function startRevision(which) {
     if (session) return;
     const ids = which === 'saved' ? progress.bookmarks : progress.mistakes;
-    const questions = bank.filter((question) => ids.includes(question.id));
+    const questions = bank.filter((question) => ids.includes(question.id) && isRegularEligibleQuestion(question));
     if (!questions.length) {
       els.formMessage.textContent = which === 'saved' ? 'You have not saved any questions yet.' : 'There are no recorded mistakes to retry yet.';
       return;
@@ -1306,6 +1307,10 @@
   window.addEventListener('storage', handleStorageChange);
   if (isExamPage) window.addEventListener('beforeunload', (event) => { if (readActiveSession()) { event.preventDefault(); event.returnValue = ''; } });
   document.addEventListener('visibilitychange', () => { if (!document.hidden && session?.endsAt) updateTimer(); });
+
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
+  }
 
   const savedSession = readActiveSession();
   if (savedSession && !isExamPage) {

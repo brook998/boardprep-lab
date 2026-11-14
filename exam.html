@@ -10,6 +10,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="apple-touch-icon" href="./pwa-icon-192.png">
 </head>
 <body class="exam-page">
   <header class="site-header">
@@ -162,7 +164,7 @@
             <div class="exam-flow-strip">
               <div><b>01 · SET UP</b><span>Choose board, class, subject, chapter and question count.</span></div>
               <div><b>02 · EXAM HALL</b><span>Attempt on a separate screen with timer and question palette.</span></div>
-              <div><b>03 · SUBMIT</b><span>Review scored answers and responses awaiting teacher checking.</span></div>
+              <div><b>03 · SUBMIT</b><span>Review your score, correct answers and explanations after submission.</span></div>
             </div>
           </div>
         </section>
@@ -255,15 +257,15 @@
       <li><b>Timed Test</b><span>Attempt a question set against a countdown timer.</span></li>
       <li><b>PYQ Test</b><span>Choose a verified exam year. The year and paper/set details appear with each question.</span></li>
       <li><b>Mock Test</b><span>Enter the code given by the academy. The complete fixed paper opens on screen, with print and download options. The timer is set for that paper.</span></li>
-      <li><b>Submit to see answers</b><span>No correct answers or explanations are shown during any test. They appear only after submission. Mock Tests are checked offline by the teacher.</span></li>
+      <li><b>Submit to see answers</b><span>No correct answers or explanations are shown during any test. They appear only after submission. Only Mock Tests are checked offline by the teacher.</span></li>
     </ol>
     <p class="dialog-warning">An unfinished test is saved on this device and will resume after refresh. Only one active test can run in this browser at a time. This static practice site is not a high-stakes secure exam system.</p>
     <button class="button button-primary button-full" id="gotItBtn" type="button">Got it</button>
   </dialog>
 
-  <script src="questions.js?v=20261114-2"></script>
-  <script src="source-questions.js?v=20261114-2"></script>
-  <script src="mock-papers.js?v=20261114-2"></script>
-  <script src="app.js?v=20261114-2"></script>
+  <script src="questions.js"></script>
+  <script src="source-questions.js"></script>
+  <script src="mock-papers.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>

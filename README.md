@@ -1,79 +1,53 @@
-# Vidhyashram · BoardPrep Lab
+# Vidhyashram BoardPrep Lab — English PYQ + installable web-app update
 
-A mobile-friendly CBSE/ISC practice and PYQ platform with a separate computer-based test screen inspired by the NTA/JEE question-palette workflow. This is an educational interface inspired by common CBT patterns, not an official NTA product or a secure proctoring client.
+## Changes in this release
 
-## Student flow
+- The old Class 10 source PYQ import labelled 2023 is removed from the source PYQ bank. Existing non-PYQ general practice questions remain in `questions.js`.
+- Class 10 Science PYQs in this release use English-medium pages from the supplied 2025 and 2026 CBSE papers only.
+- Ordinary Practice, Timed and PYQ tests admit only MCQs and numericals with a usable answer. Descriptive/written and fill-in-the-blank questions are excluded.
+- The teacher-checking language and workflow are reserved for Mock Tests only. Ordinary test results are automatically scored.
+- Three 2026 Class 10 Science direct-entry resistivity numericals have been added as numeric response questions (papers 31/1/1, 31/1/2 and 31/1/3).
+- Question text is normalised as selectable text. Source images are full English paper pages and are displayed with `height:auto` and `object-fit:contain`; they are not cropped.
+- Class 10 image data is bundled by year in `pyq-images-class10-2025.js` and `pyq-images-class10-2026.js`; these load lazily when a PYQ is opened.
+- The existing Class 12 Physics source bank is preserved.
+- Android installable PWA support is included through `manifest.webmanifest`, icons and `sw.js`. Cache version is bumped to v3 so an older service-worker shell is replaced.
 
-1. **Test setup (`index.html`)** — select Board, Class, Subject, Chapter/topic, test type, question count and (for timed tests) duration.
-2. **Exam hall (`exam.html`)** — a separate screen with timer, question palette, question status colours, answer controls, mark-for-review, clear response, save-and-next and optional full-screen mode. The palette allows direct navigation among questions.
-3. **Submission and review** — students see the submission summary, automatic score where a verified auto-gradable bank item exists, and imported source questions awaiting teacher checking. Answers are not shown before submission.
+## Question bank coverage (important)
 
-An active test is saved locally and resumes after refresh. Opening the setup page while a test is active redirects to the exam hall. The browser Back action is guarded while the session is active. This is an app-level navigation guard, not an operating-system kiosk lock.
+- Class 10 PYQs currently in the release: **287** (121 from 2025 and 166 from 2026).
+- Of these, **284 are MCQs** and **3 are direct-entry numericals**.
+- The MCQ tranche currently covers **21 standard paper codes**: 9 from 2025 series 31/1–31/3, and 12 from 2026 series 31/2–31/5.
+- The three numeric items are from 2026 series 31/1, sets 1–3.
+- **Not all papers in the two ZIPs are in this release yet.** The remaining scanned 2025 series 31/4–31/6 MCQ sections and the 2026 series 31/1 MCQ sections were not added because their OCR extraction still requires question-by-question verification. I have not guessed those questions or keys. They remain for a follow-up import.
+- Class 12 Physics source PYQs preserved: **124**.
 
-## Question bank included
+See `PYQ-AUDIT.json` for counts and exact included paper codes.
 
-- **79 existing app-ready questions** in `questions.js`, with their existing automatic marking behaviour.
-- **624 Class 10 CBSE Science source questions** across 13 chapters, tagged to the 2023 paper collection.
-- **125 Class 12 CBSE Physics source questions** across 8 chapters, tagged to the 2026 paper collection.
-- **749 imported source questions total**, with chapter, year, paper/set code, source question number and a cropped original question image. The image is shown in each imported question so students can check diagrams, symbols and options against the original.
-- Source MCQs use A/B/C/D response controls. Written and case-based questions use a saved text response for manual teacher checking.
+## Upload from Android Chrome
 
-### Important source-question grading note
+1. Extract this ZIP on your phone.
+2. Open `https://github.com/brook998/boardprep-lab` in Chrome and go to the repository's main page (the page that contains `index.html`).
+3. Tap **Add file → Upload files**.
+4. Select the files from this ZIP and commit them. Replace existing files when asked.
+5. Upload the root files; do not place the JavaScript image bundles inside `assets/pyq`.
 
-Imported PYQ answer keys are **not used for automatic marking yet**. The Science source transcription has 240 objective answer letters from matching 2023 marking schemes and 80 objective items without a confirmed key. The Physics archive contains 125 answer letters copied from its chapter key tables, but these have not been independently verified. OCR can misread mathematical symbols, diagrams and option order. The answer key and OCR text should be checked against the supplied original question image before enabling automatic grading. Written/case-based questions are not auto-marked. This is deliberate to avoid incorrect student results.
+Replace existing: `index.html`, `exam.html`, `app.js`, `styles.css`, `questions.js`, `source-questions.js`, `mock-papers.js`, `pyq-images-class10-2025.js`, `pyq-images-class10-2026.js`, `pyq-images-class12.js` (keep this file), and `sw.js`.
+Add if missing: `manifest.webmanifest`, `pwa-icon-192.png`, `pwa-icon-512.png`, `.nojekyll`, and the `mock-papers/README.md` file/folder.
 
-## Project files
+Do not delete your old `assets/` folder until you confirm the new Class 10 PYQ pages load on the live site. The new source pages use the year bundles at repository root.
 
-- `index.html` — home and test setup page.
-- `exam.html` — dedicated test-taking page.
-- `styles.css` — responsive home and NTA/JEE-inspired exam interface.
-- `app.js` — test selection, timer, exam navigation guard, response persistence and results.
-- `questions.js` — the original 79 app-ready questions.
-- `source-questions.js` — the imported 749-question source bank.
-- `assets/pyq/` — original question images, one WebP per imported source question. Preserve the folder path.
-- `mock-papers.js` and `mock-papers/` — teacher-managed mock paper codes and PDFs.
+## Install BoardPrep Lab as an Android app
 
-## Publish/update on GitHub Pages
+After GitHub Pages has published the update:
+1. Open `https://brook998.github.io/boardprep-lab/` in Chrome.
+2. Tap Chrome's three-dot menu.
+3. Choose **Install app** or **Add to Home screen** (the exact wording depends on Chrome version).
+4. The site will appear as an app icon on your phone.
 
-Upload the **complete contents** of this project ZIP to the repository root, preserving the `assets/pyq/` folder and the `mock-papers/` folder. Replace matching files and add new ones. In particular, do not omit `exam.html`, `source-questions.js`, or any files under `assets/pyq/`. Then commit the changes to the GitHub Pages branch.
+This is a **Progressive Web App (PWA)**, not a native APK or Play Store app. It can open in its own app window and cache files after they have been fetched once. Initial use and new downloads still require internet.
 
-The script order in both `index.html` and `exam.html` must remain:
+## Important limitations
 
-1. `questions.js`
-2. `source-questions.js`
-3. `mock-papers.js`
-4. `app.js`
-
-## Add a Mock Test
-
-1. Put the complete teacher-approved PDF in `mock-papers/`.
-2. Register its code in `mock-papers.js`, for example:
-
-```js
-window.MOCK_PAPERS = [
-  {
-    code: 'VID10SCI-M01',
-    title: 'Class 10 Science · Full Syllabus Mock 1',
-    class: '10',
-    board: 'CBSE',
-    subject: 'Science',
-    durationMinutes: 180,
-    maxMarks: 80,
-    pdf: 'mock-papers/class10-science-mock01.pdf',
-    instructions: 'Read all instructions printed on the paper.'
-  }
-];
-```
-
-3. Use a unique code and set the duration and marks for that exact paper.
-4. Commit the JS file and PDF. Students enter the code, review the paper details, and can open/print or download the paper before starting the timer. The full paper is displayed in the separate exam hall. Mock papers are manually checked by the teacher, as requested.
-
-## Static-hosting limitations
-
-GitHub Pages is public static hosting. Mock codes are paper selectors, not secure authentication. A published PDF can be opened directly, and the JavaScript question bank and answer keys can be inspected by a technically capable user. The browser cannot prevent developer tools, downloads, a second device or clearing local storage. The active-test guard applies within the same browser profile/device; it is not a cross-device lock or proctoring system. Full-screen mode is optional and browser-controlled.
-
-For confidential papers, protected answer keys, centralized student accounts, server-side scoring and true exam controls, the site would need a backend with authentication and protected storage.
-
-## Local data
-
-Progress, bookmarks, mistakes and active tests are stored in the student's browser. Clearing browser data or changing device/browser removes that local record. There is no central teacher dashboard or account system in this static version.
+- This remains a static GitHub Pages application. Students' progress is stored locally in the browser; there is no central student database, server-side code or secure proctoring.
+- Questions and answer keys are included client-side and can be inspected by a technically skilled visitor.
+- Scanned paper sets whose text/key mapping has not been fully verified are omitted, not guessed. They can be added in a later import once verified.

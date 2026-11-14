@@ -1,35 +1,15 @@
-# START HERE — Vidhyashram BoardPrep Lab CBT update
+VIDHYASHRAM BOARDPREP LAB — ANDROID UPDATE GUIDE
 
-This is a complete website update, not a single-file patch. Extract the ZIP and upload the complete project contents to the root of your existing GitHub Pages repository. Keep all folder paths and file names unchanged.
+1. Extract this ZIP on your Android phone.
+2. Open your GitHub repository main page: https://github.com/brook998/boardprep-lab
+3. Tap Add file → Upload files.
+4. Select the root files from this extracted release, replace existing files when asked, then Commit changes.
+5. Keep the three `pyq-images-...js` files in the repository root. Do not move them into `assets/pyq`.
+6. Do not delete the old `assets` folder until we confirm the new full-page images load.
+7. After commit, wait for GitHub Pages to publish, then refresh Chrome and start a NEW test. The active-test storage key and service-worker cache were versioned so stale sessions/cache are not reused.
 
-## Files and folders that must be present
+Normal Practice, Timed and PYQ tests now include only automatically gradable MCQs and numericals. Teacher checking is reserved for Mock Tests.
 
-- `index.html` (home and test setup)
-- `exam.html` (separate test-taking screen)
-- `styles.css`
-- `app.js`
-- `questions.js`
-- `source-questions.js`
-- `mock-papers.js`
-- `assets/pyq/` (all 749 original question-image crops)
-- `mock-papers/`
-- `.nojekyll`
+Install on Android: Chrome menu (⋮) → Install app / Add to Home screen. This installs a PWA shortcut/app window, not a native Play Store APK.
 
-Also keep the included README files. Do not upload only the HTML and JS files while omitting the `assets/pyq/` folder; the imported source questions use those images.
-
-## What students will see
-
-They choose Board, Class, Subject, Chapter/topic, test type and number of questions on the home page. When they press Start, the test opens on a different page. The exam hall has a timer, question palette, answer status colours, Previous, Clear Response, Mark for Review, Mark & Next, Save & Next, Submit, and optional full-screen mode. While a test is active, the setup page redirects to the exam hall.
-
-## Imported source bank
-
-The ZIP contains 624 Class 10 CBSE Science source questions (2023 paper collection) and 125 Class 12 CBSE Physics source questions (2026 paper collection), 749 in total. Their chapter, paper/set code, question number and original question image are preserved. Source answer keys are not auto-graded until teacher verification; written and case-based questions are saved for manual checking.
-
-## Publish
-
-1. Extract the ZIP.
-2. Upload all files and folders to the root of the repository, replacing the matching older versions. Preserve `assets/pyq/` and `mock-papers/`.
-3. Commit the changes to the GitHub Pages branch.
-4. After deployment, open the live site and test the setup page, then start a small practice test to confirm it opens on the separate exam page. Refresh during a test to confirm it resumes.
-
-GitHub Pages is static. This app provides an exam-style workflow and browser navigation guard, but it cannot provide secure kiosk mode or protected answer keys. Read `README.md` for the full limitations and mock-paper setup.
+Coverage note: the current Class 10 bank is an English-only verified tranche, not all 33 standard paper sets from the two supplied ZIPs. See PYQ-AUDIT.json and README.md for the exact coverage and the scanned sets still awaiting verification.

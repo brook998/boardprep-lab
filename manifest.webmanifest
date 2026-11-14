@@ -1,0 +1,26 @@
+{
+  "id": "./index.html",
+  "name": "Vidhyashram BoardPrep Lab",
+  "short_name": "BoardPrep Lab",
+  "description": "CBSE practice, verified previous-year questions and mock tests for Classes 10 and 12.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#f5f7fb",
+  "theme_color": "#14233b",
+  "icons": [
+    {
+      "src": "./pwa-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./pwa-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

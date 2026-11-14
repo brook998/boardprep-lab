@@ -1,0 +1,49 @@
+{
+  "class10_pyq_total": 287,
+  "class10_mcq_total": 284,
+  "class10_numeric_total": 3,
+  "class10_by_year": {
+    "2025": 121,
+    "2026": 166
+  },
+  "class10_mcq_paper_count": 21,
+  "class10_mcq_by_paper": {
+    "2025-31/1/1": 20,
+    "2025-31/1/2": 13,
+    "2025-31/1/3": 13,
+    "2025-31/2/1": 19,
+    "2025-31/2/2": 9,
+    "2025-31/2/3": 9,
+    "2025-31/3/1": 19,
+    "2025-31/3/2": 10,
+    "2025-31/3/3": 9,
+    "2026-31/2/1": 20,
+    "2026-31/2/2": 11,
+    "2026-31/2/3": 11,
+    "2026-31/3/1": 17,
+    "2026-31/3/2": 10,
+    "2026-31/3/3": 11,
+    "2026-31/4/1": 18,
+    "2026-31/4/2": 9,
+    "2026-31/4/3": 10,
+    "2026-31/5/1": 20,
+    "2026-31/5/2": 13,
+    "2026-31/5/3": 13
+  },
+  "class10_numeric_by_paper": {
+    "2026-31/1/1": 1,
+    "2026-31/1/2": 1,
+    "2026-31/1/3": 1
+  },
+  "class10_english_medium_only": true,
+  "class10_source_note": "MCQs currently included from searchable English papers: 2025 series 31/1 to 31/3 (9 standard paper codes); 2026 series 31/2 to 31/5 (12 standard paper codes). Three direct-entry numerical items added from 2026 series 31/1. The remaining scanned 2025 series 31/4 to 31/6 MCQ sections and 2026 series 31/1 MCQ sections are not included in this release because the OCR extraction was not yet fully verified question-by-question; they are deliberately not guessed.",
+  "class12_physics_verified_pyq_total": 124,
+  "total_sourced_pyq_bank": 411,
+  "excluded_from_regular_tests": [
+    "descriptive/written",
+    "fill-in-the-blank",
+    "source questions without verified answer keys"
+  ],
+  "teacher_checking": "Mock Tests only; ordinary Practice, Timed and PYQ tests have no teacher-checking queue.",
+  "image_policy": "Only full English paper pages are bundled and displayed with object-fit:contain; no source-page crop is used."
+}
