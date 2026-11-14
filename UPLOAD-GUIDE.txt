@@ -1,19 +1,12 @@
-VIDHYASHRAM BOARDPREP LAB — PYQ GRADING + IMAGE FIX
+VIDHYASHRAM BOARDPREP LAB — CACHE / PYQ IMAGE LOADING FIX
 
-Upload these five files to the ROOT of your GitHub repository (the same folder as index.html):
-1. app.js
-2. source-questions.js
-3. styles.css
-4. pyq-images-class10.js
-5. pyq-images-class12.js
+Upload these three files to the ROOT of your GitHub repository (same folder as index.html):
+- index.html
+- exam.html
+- app.js
 
-Do not put the files inside assets/ or assets/pyq. Keep both image-bundle files in the repository root.
-On GitHub, open the repository home page → Add file → Upload files. Select all five extracted files, then Commit changes.
+Choose to replace the existing files when GitHub asks. Do not upload these into assets/ or assets/pyq.
+Do not delete the existing pyq-images-class10.js or pyq-images-class12.js files. Keep both image bundles in the repository root, alongside index.html.
 
-What changes:
-- Verified Class 10 MCQs and Class 12 Physics MCQs grade automatically.
-- One clear Class 10 numerical PYQ accepts a numeric response.
-- Descriptive answers remain for teacher checking.
-- Objective PYQs without a verified key are marked “not scored — answer key not verified”, not “teacher check”.
-- Original question images are embedded in the two JS bundles, so you do not need to upload the 749-image assets folder.
-- Mock tests remain unchanged and are still checked offline by the teacher.
+This update adds versioned URLs to the app/question scripts and image-bundle loader so Chrome/GitHub Pages is less likely to reuse stale cached files. It does not change the question bank or invent missing answer keys.
+After committing, close any active test, return home, refresh, and start a NEW PYQ test.

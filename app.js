@@ -567,7 +567,7 @@
     if (pyqImageBundlePromises[level]) return pyqImageBundlePromises[level];
     pyqImageBundlePromises[level] = new Promise((resolve) => {
       const script = document.createElement('script');
-      script.src = new URL(`pyq-images-class${level}.js`, document.baseURI).href;
+      script.src = new URL(`pyq-images-class${level}.js?v=20261114-2`, document.baseURI).href;
       script.async = true;
       script.onload = () => resolve(true);
       script.onerror = () => resolve(false);
