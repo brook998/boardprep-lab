@@ -1,0 +1,45 @@
+VIDHYASHRAM BOARDPREP LAB — CHAPTER ORDER + PRACTICE BANK UPDATE
+
+WHAT THIS UPDATE DOES
+1. Keeps the ordered chapter catalogue independent of question availability.
+2. Adds 270 original, auto-gradable practice questions across all supported course combinations.
+3. Adds 90 Easy, 90 Moderate and 90 Difficult questions.
+4. Every listed syllabus chapter/unit receives three new practice questions (one per level).
+5. Adds 19 numerical-entry questions; the remaining 251 are MCQs with four options.
+6. Keeps all existing PYQ records and existing questions unchanged. The new material is not labelled as PYQ.
+7. Keeps the supported scope to CBSE Class 10, CBSE Class 12 and ISC Class 12. ICSE Class 10 is not included.
+8. Corrects ISC Class 12 Mathematics catalogue to the seven official syllabus units.
+
+NEW QUESTION COVERAGE
+- CBSE Class 10 Science: 39 (13 chapters × 3)
+- CBSE Class 10 Mathematics: 42 (14 chapters × 3)
+- CBSE Class 12 Physics: 42 (14 chapters × 3)
+- CBSE Class 12 Chemistry: 30 (10 chapters × 3)
+- CBSE Class 12 Mathematics: 39 (13 chapters × 3)
+- ISC Class 12 Physics: 27 (9 units × 3)
+- ISC Class 12 Chemistry: 30 (10 units × 3)
+- ISC Class 12 Mathematics: 21 (7 units × 3)
+
+UPLOAD ON ANDROID / CHROME
+1. Extract this ZIP on your phone.
+2. Open the GitHub repository's main folder (the page showing index.html).
+3. Choose Add file → Upload files.
+4. Upload ALL files from this ZIP into the repository root. Do not upload the ZIP itself.
+5. Replace existing files when GitHub asks, then commit the changes.
+
+FILES IN THIS ZIP
+- app.js
+- index.html
+- exam.html
+- sw.js
+- chapter-catalog.js
+- practice-expansion.js
+- CHAPTER-ORDER-UPDATE.txt
+- PRACTICE-BANK-UPDATE.txt
+
+IMPORTANT
+- This is a combined update. It includes the earlier chapter-order changes, so you can use this ZIP instead of uploading the earlier Chapter Order Update ZIP separately.
+- Do NOT replace questions.js or source-questions.js. Existing PYQs and existing practice records remain as they are.
+- Do NOT delete assets/pyq or any PYQ image bundle.
+- The added questions are original practice questions, not official previous-year questions.
+- The package has been syntax-checked and the question data validated locally. It has not been deployed to GitHub or tested on your specific phone yet.

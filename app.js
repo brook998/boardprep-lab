@@ -3,6 +3,7 @@
 
   const bank = Array.isArray(window.QUESTION_BANK) ? window.QUESTION_BANK : [];
   const mockPapers = Array.isArray(window.MOCK_PAPERS) ? window.MOCK_PAPERS : [];
+  const chapterCatalog = window.BOARDPREP_CHAPTER_CATALOG || {};
   const STORAGE_KEY = 'vidhyashram-boardprep-progress-v2';
   const LEGACY_STORAGE_KEY = 'boardprep-lab-progress-v1';
   const ACTIVE_KEY = 'vidhyashram-boardprep-active-v3';
@@ -98,6 +99,13 @@
     return [...new Set(values)].sort((a, b) => String(a).localeCompare(String(b)));
   }
 
+  function orderedSubjects(cls, board) {
+    const configured = chapterCatalog?.[board]?.[cls] || {};
+    const preferred = cls === '10' ? ['Mathematics', 'Science'] : ['Physics', 'Chemistry', 'Mathematics'];
+    const present = uniqueSorted(bank.filter((q) => q.class === cls && q.board === board).map((q) => q.subject));
+    return [...preferred.filter((name) => configured[name] || present.includes(name)), ...present.filter((name) => !preferred.includes(name))];
+  }
+
   function makeElement(tag, className, text) {
     const node = document.createElement(tag);
     if (className) node.className = className;
@@ -152,7 +160,7 @@
 
   function refreshBoardOptions() {
     const cls = els.classSelect.value;
-    const boards = uniqueSorted(bank.filter((q) => isRegularEligibleQuestion(q) && q.class === cls).map((q) => q.board));
+    const boards = uniqueSorted([...Object.keys(chapterCatalog).filter((board) => chapterCatalog[board]?.[cls]), ...bank.filter((q) => q.class === cls).map((q) => q.board)]);
     const previous = els.boardSelect.value;
     setSelectOptions(els.boardSelect, boards, 'Choose a board', '');
     els.boardSelect.value = boards.includes(previous) ? previous : (boards[0] || '');
@@ -162,10 +170,10 @@
   function refreshSubjectOptions() {
     const cls = els.classSelect.value;
     const board = els.boardSelect.value;
-    const subjects = uniqueSorted(bank.filter((q) => isRegularEligibleQuestion(q) && q.class === cls && q.board === board).map((q) => q.subject));
+    const subjects = orderedSubjects(cls, board);
     const previous = els.subjectSelect.value;
     setSelectOptions(els.subjectSelect, subjects, 'Choose a subject', '');
-    const preferred = cls === '10' && board === 'CBSE' ? 'Science' : (cls === '12' && board === 'CBSE' ? 'Physics' : '');
+    const preferred = cls === '10' && board === 'CBSE' ? 'Science' : (cls === '12' ? 'Physics' : '');
     els.subjectSelect.value = subjects.includes(previous) ? previous : (subjects.includes(preferred) ? preferred : (subjects[0] || ''));
     refreshChapterOptions();
   }
@@ -174,9 +182,14 @@
     const cls = els.classSelect.value;
     const board = els.boardSelect.value;
     const subject = els.subjectSelect.value;
-    const chapters = uniqueSorted(bank.filter((q) => isRegularEligibleQuestion(q) && q.class === cls && q.board === board && q.subject === subject).map((q) => q.chapter));
+    const configured = (chapterCatalog?.[board]?.[cls]?.[subject] || []).slice();
+    const bankChapters = uniqueSorted(bank.filter((q) => q.class === cls && q.board === board && q.subject === subject).map((q) => q.chapter).filter(Boolean));
+    // Keep official textbook sequence first. Preserve legacy/uncategorised question groups after it
+    // so existing PYQs remain reachable while their chapter mapping is being reviewed.
+    const extras = bankChapters.filter((name) => !configured.includes(name));
+    const chapters = [...configured, ...extras];
     const previous = els.chapterSelect.value;
-    setSelectOptions(els.chapterSelect, chapters, 'All available chapters', 'all');
+    setSelectOptions(els.chapterSelect, chapters, 'All chapters (including unclassified)', 'all');
     if (chapters.includes(previous)) els.chapterSelect.value = previous;
     refreshPyqYears();
     updateAvailableCount();

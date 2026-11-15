@@ -1,7 +1,7 @@
-const CACHE_NAME = 'vidhyashram-boardprep-shell-v3';
+const CACHE_NAME = 'vidhyashram-boardprep-shell-v5';
 const SHELL = [
   './', './index.html', './exam.html', './styles.css', './app.js',
-  './questions.js', './source-questions.js', './mock-papers.js',
+  './questions.js', './source-questions.js', './mock-papers.js', './chapter-catalog.js', './practice-expansion.js',
   './manifest.webmanifest', './pwa-icon-192.png', './pwa-icon-512.png',
   './pyq-images-class12.js'
 ];
