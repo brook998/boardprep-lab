@@ -1,0 +1,20 @@
+{
+  "mapped_records": 287,
+  "chapter_counts": {
+    "Chemical Reactions and Equations": 30,
+    "Acids, Bases and Salts": 35,
+    "Metals and Non-metals": 27,
+    "Life Processes": 37,
+    "Control and Coordination": 17,
+    "How do Organisms Reproduce?": 16,
+    "Heredity": 20,
+    "Light - Reflection and Refraction": 12,
+    "The Human Eye and the Colourful World": 12,
+    "Our Environment": 30,
+    "Magnetic Effects of Electric Current": 20,
+    "Electricity": 14,
+    "Carbon and its Compounds": 17
+  },
+  "no_general_records": true,
+  "mapping_note": "Existing source question text/options based chapter classification; review disputed assignments."
+}

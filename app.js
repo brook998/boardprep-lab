@@ -189,8 +189,19 @@
     const extras = bankChapters.filter((name) => !configured.includes(name));
     const chapters = [...configured, ...extras];
     const previous = els.chapterSelect.value;
-    setSelectOptions(els.chapterSelect, chapters, 'All chapters (including unclassified)', 'all');
-    if (chapters.includes(previous)) els.chapterSelect.value = previous;
+    els.chapterSelect.replaceChildren();
+    const allOption = document.createElement('option');
+    allOption.value = 'all';
+    allOption.textContent = 'All chapters';
+    els.chapterSelect.append(allOption);
+    chapters.forEach((name) => {
+      const count = bank.filter((q) => isRegularEligibleQuestion(q) && q.class === cls && q.board === board && q.subject === subject && q.chapter === name).length;
+      const option = document.createElement('option');
+      option.value = name;
+      option.textContent = `${name} (${count} questions)`;
+      els.chapterSelect.append(option);
+    });
+    els.chapterSelect.value = chapters.includes(previous) ? previous : 'all';
     refreshPyqYears();
     updateAvailableCount();
   }
