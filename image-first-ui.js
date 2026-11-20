@@ -1,7 +1,9 @@
 /* Vidhyashram BoardPrep Lab — image-first UI bridge.
-   Load this AFTER app.js. It does not replace the exam engine or grading logic. */
+   Load this AFTER app.js. It does not replace the exam engine or grading logic.
+   Observers are scoped and all text updates are idempotent to prevent mutation loops. */
 (() => {
   'use strict';
+
   document.body.classList.add('vui-upgrade');
 
   const imageFirstBank = () => (Array.isArray(window.QUESTION_BANK) ? window.QUESTION_BANK : [])
@@ -24,7 +26,8 @@
     const select = document.getElementById('chapterSelect');
     if (!select) return;
     [...select.options].forEach(option => {
-      option.textContent = option.textContent.replace(/\s+\(\d+ questions?\)$/i, '');
+      const cleaned = option.textContent.replace(/\s+\(\d+ questions?\)$/i, '');
+      if (option.textContent !== cleaned) option.textContent = cleaned;
     });
   }
 
@@ -35,19 +38,23 @@
       delete area.dataset.imageFirstQuestionId;
       return;
     }
-    if (area.dataset.imageFirstQuestionId === question.id && area.querySelector('.question-source-crop')) return;
+
+    const alreadyRendered = area.dataset.imageFirstQuestionId === question.id &&
+      (area.querySelector('.question-source-crop') || area.querySelector('.question-source-fallback'));
+    if (alreadyRendered) return;
 
     area.classList.add('image-first-question');
     area.dataset.imageFirstQuestionId = question.id;
 
     const existingPrompt = area.querySelector('.question-prompt');
     if (existingPrompt) existingPrompt.remove();
-    area.querySelectorAll('.source-image-details').forEach(node => node.remove());
-    area.querySelectorAll('.question-source-crop, .question-source-fallback').forEach(node => node.remove());
+    area.querySelectorAll('.source-image-details, .question-source-crop, .question-source-fallback')
+      .forEach(node => node.remove());
 
     const figure = document.createElement('figure');
     figure.className = 'question-source-crop';
     figure.setAttribute('aria-label', `${question.board} ${question.year} original question image`);
+
     const image = document.createElement('img');
     image.src = question.sourceImage;
     image.alt = String(question.prompt || `${question.board} Class 12 Physics ${question.year} question ${question.questionNumber} from paper ${question.paperCode || ''}`);
@@ -68,30 +75,37 @@
     if (insertionPoint && insertionPoint.parentNode) insertionPoint.parentNode.insertBefore(figure, insertionPoint.nextSibling);
     else area.prepend(figure);
 
-    // The CBSE/ISC source image already contains the printed options. Keep the app's
-    // radio controls, but display clean A/B/C/D selectors instead of repeating option text.
     if (question.type === 'source-mcq') {
       area.querySelectorAll('.question-options .option-label').forEach((label, index) => {
         const span = label.querySelector('span');
         const radio = label.querySelector('input[type="radio"]');
-        if (span && radio) span.textContent = radio.value || 'ABCD'[index] || '';
+        if (span && radio) {
+          const letter = radio.value || 'ABCD'[index] || '';
+          if (span.textContent !== letter) span.textContent = letter;
+        }
       });
     }
   }
 
-  function refresh() {
+  function start() {
+    const chapterSelect = document.getElementById('chapterSelect');
     normalizeChapterLabels();
+    if (chapterSelect) {
+      const chapterObserver = new MutationObserver(normalizeChapterLabels);
+      chapterObserver.observe(chapterSelect, { childList: true, subtree: true });
+    }
+
     const area = document.getElementById('questionArea');
-    if (area) applyImageFirst(area);
+    if (area) {
+      const questionObserver = new MutationObserver(() => applyImageFirst(area));
+      questionObserver.observe(area, { childList: true, subtree: true });
+      applyImageFirst(area);
+    }
   }
 
-  const observer = new MutationObserver(() => refresh());
-  const start = () => {
-    observer.observe(document.body, { childList: true, subtree: true });
-    refresh();
-    const chapterSelect = document.getElementById('chapterSelect');
-    if (chapterSelect) new MutationObserver(normalizeChapterLabels).observe(chapterSelect, { childList: true });
-  };
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once: true });
-  else start();
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', start, { once: true });
+  } else {
+    start();
+  }
 })();
