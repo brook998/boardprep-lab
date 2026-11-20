@@ -1,0 +1,36 @@
+name: Install BoardPrep Class 12 image update
+
+on:
+  push:
+    paths:
+      - "boardprep-class12-image-update.zip"
+
+permissions:
+  contents: write
+
+jobs:
+  install:
+    if: ${{ !contains(join(github.event.head_commit.removed, ','), 'boardprep-class12-image-update.zip') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate and install the update
+        run: |
+          unzip -p boardprep-class12-image-update.zip install_class12_image_update.py > /tmp/install_boardprep.py
+          python /tmp/install_boardprep.py boardprep-class12-image-update.zip
+          node --check class12-image-bank.js
+          node --check image-first-ui.js
+          node --check app.js
+          node --check sw.js
+          rm -f boardprep-class12-image-update.zip
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html exam.html sw.js class12-image-bank.js image-first-ui.js image-first-ui.css assets/pyq/class12
+          git add -u
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "Install Class 12 image-first PYQ update"
+            git push
+          fi
+          
