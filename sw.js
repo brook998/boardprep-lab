@@ -1,9 +1,12 @@
-const CACHE_NAME = 'vidhyashram-boardprep-shell-v6';
+const CACHE_NAME = 'vidhyashram-boardprep-shell-v7';
 const SHELL = [
   './', './index.html', './exam.html', './styles.css', './app.js',
   './questions.js', './source-questions.js', './chapter-map.js', './mock-papers.js',
   './chapter-catalog.js', './practice-expansion.js', './manifest.webmanifest',
-  './pwa-icon-192.png', './pwa-icon-512.png', './pyq-images-class12.js'
+  './pwa-icon-192.png', './pwa-icon-512.png', './pyq-images-class12.js',
+  './class12-image-bank.js',
+  './image-first-ui.js',
+  './image-first-ui.css'
 ];
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(SHELL)).then(() => self.skipWaiting()));

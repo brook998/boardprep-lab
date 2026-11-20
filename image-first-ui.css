@@ -1,0 +1,172 @@
+/* Vidhyashram BoardPrep Lab — visual refresh and image-first question styling */
+body.vui-upgrade {
+  background: #f3f6fb;
+  color: #182940;
+}
+body.vui-upgrade .site-header {
+  background: rgba(255,255,255,.94);
+  border-bottom: 1px solid #e4eaf2;
+  box-shadow: 0 5px 22px rgba(22,43,70,.055);
+  backdrop-filter: blur(12px);
+}
+body.vui-upgrade .brand-mark {
+  border-radius: 13px;
+  box-shadow: 0 6px 16px rgba(29,64,105,.18);
+}
+body.vui-upgrade .brand-copy strong { letter-spacing: .8px; }
+body.vui-upgrade .brand-copy small { color: #78879b; }
+body.vui-upgrade .page-shell { max-width: 1420px; }
+body.vui-upgrade .hero {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 86% 18%, rgba(105,156,211,.32), transparent 27%),
+    radial-gradient(circle at 8% 100%, rgba(72,126,184,.24), transparent 34%),
+    linear-gradient(122deg, #142844 0%, #1c3c61 58%, #28557c 100%);
+  box-shadow: 0 18px 38px rgba(22,46,74,.16);
+}
+body.vui-upgrade .hero:after {
+  content: "";
+  position: absolute;
+  width: 250px; height: 250px;
+  right: -95px; bottom: -150px;
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 50%;
+  box-shadow: 0 0 0 24px rgba(255,255,255,.025), 0 0 0 52px rgba(255,255,255,.02);
+  pointer-events: none;
+}
+body.vui-upgrade .academy-title { letter-spacing: .6px; }
+body.vui-upgrade .academy-subtitle { color: #c1d5eb; }
+body.vui-upgrade .hero-subtitle { color: #e1ebf6; }
+body.vui-upgrade .notice {
+  border: 1px solid #dce7f4;
+  border-radius: 12px;
+  background: #f8fbff;
+  box-shadow: 0 4px 14px rgba(30,57,89,.04);
+}
+body.vui-upgrade .panel {
+  border: 1px solid #e3eaf2;
+  border-radius: 17px;
+  box-shadow: 0 10px 28px rgba(23,47,76,.065);
+}
+body.vui-upgrade .panel-heading h2,
+body.vui-upgrade .welcome-copy h2,
+body.vui-upgrade .session-topline h2,
+body.vui-upgrade .result-panel h2 { letter-spacing: -.45px; }
+body.vui-upgrade .field label { color: #40546d; font-weight: 700; }
+body.vui-upgrade select,
+body.vui-upgrade input:not([type="radio"]),
+body.vui-upgrade textarea {
+  border-color: #d9e2ed;
+  border-radius: 10px;
+  background-color: #fff;
+  transition: border-color .16s ease, box-shadow .16s ease;
+}
+body.vui-upgrade select:focus,
+body.vui-upgrade input:focus,
+body.vui-upgrade textarea:focus {
+  outline: none;
+  border-color: #6e95c3;
+  box-shadow: 0 0 0 3px rgba(76,126,182,.14);
+}
+body.vui-upgrade .button {
+  border-radius: 10px;
+  font-weight: 700;
+  transition: transform .14s ease, box-shadow .14s ease, background-color .14s ease;
+}
+body.vui-upgrade .button-primary {
+  box-shadow: 0 6px 14px rgba(30,74,122,.16);
+}
+body.vui-upgrade .button-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 9px 18px rgba(30,74,122,.2);
+}
+body.vui-upgrade button:focus-visible,
+body.vui-upgrade a:focus-visible {
+  outline: 3px solid rgba(57,119,187,.35);
+  outline-offset: 2px;
+}
+body.vui-upgrade .welcome-panel { background: linear-gradient(145deg,#fff,#f9fbfe); }
+body.vui-upgrade .feature-pills span {
+  border: 1px solid #e0e8f1;
+  background: #f4f8fc;
+  color: #48617d;
+}
+body.vui-upgrade .exam-flow-strip > div {
+  border-color: #e3ebf4;
+  background: #fff;
+}
+body.vui-upgrade .session-panel { overflow: hidden; }
+body.vui-upgrade .question-area { min-width: 0; }
+body.vui-upgrade .question-kicker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+body.vui-upgrade .question-kicker > span {
+  border-radius: 999px;
+  padding: 5px 9px;
+  background: #f1f5fa;
+  color: #3d5877;
+}
+body.vui-upgrade .question-kicker .year-tag {
+  background: #eaf2fb;
+  color: #315a83;
+}
+body.vui-upgrade .question-source-crop {
+  margin: 15px 0 20px;
+  padding: 10px;
+  border: 1px solid #dfe7f0;
+  border-radius: 13px;
+  background: #fff;
+  box-shadow: 0 8px 22px rgba(24,48,75,.055);
+}
+body.vui-upgrade .question-source-crop img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: min(72vh, 940px);
+  object-fit: contain;
+  object-position: top center;
+  border-radius: 7px;
+  background: #fff;
+}
+body.vui-upgrade .question-options { gap: 10px; }
+body.vui-upgrade .option-label {
+  min-height: 46px;
+  border: 1px solid #dfe6ef;
+  border-radius: 11px;
+  background: #fff;
+  transition: border-color .14s ease, background .14s ease, box-shadow .14s ease;
+}
+body.vui-upgrade .option-label:hover { border-color: #95afcc; background: #f9fbfe; }
+body.vui-upgrade .option-label.selected {
+  border-color: #4f7fb3;
+  background: #eff6ff;
+  box-shadow: 0 0 0 2px rgba(79,127,179,.1);
+}
+body.vui-upgrade .image-first-question .option-label span {
+  font-weight: 800;
+  color: #294c70;
+}
+body.vui-upgrade .question-source-fallback {
+  margin: 14px 0;
+  padding: 14px;
+  border: 1px dashed #d4b87c;
+  border-radius: 10px;
+  background: #fffaf0;
+  color: #6c5835;
+  line-height: 1.55;
+}
+body.vui-upgrade .result-panel .review-item,
+body.vui-upgrade .dashboard-panel .stat-card { border-radius: 11px; }
+body.vui-upgrade .site-footer { color: #8795a7; }
+@media (max-width: 700px) {
+  body.vui-upgrade .hero { border-radius: 17px; }
+  body.vui-upgrade .panel { border-radius: 14px; }
+  body.vui-upgrade .question-source-crop { padding: 6px; border-radius: 10px; }
+  body.vui-upgrade .question-source-crop img { max-height: none; }
+}
